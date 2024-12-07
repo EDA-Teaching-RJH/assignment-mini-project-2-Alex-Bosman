@@ -1,39 +1,54 @@
 {"0b0000":{mnemonic:maf, regex:}}
 
-keywords:
+
+typeA - opcode
+typeB - opcode, operand1
+typeC - opcode, operand1, operand2
+typeD - opcode, operand1, operand2, operand3
+
+typeA regex (opcode)
+^({opcode})$
+
+typeB regex (opcode, register)
+^({opcode}) (\br[0-9a-f]\b|(?!(?:\b{reservedWord1}\b|\b{reservedWord2etc}\b))\w+)$
+
+typeC regex (opcode, register, immediate)
+
+
+typeD regex (opcode, register, register, register)
 
 
 
 
-"maf" "0b0000"
-^([mM][aA][fF]) (\br[0-9a-fA-F]\b|(?!(?:\bhello\b|\bbob\b))\w+)$
+"maf" "0b0000" - opcode, register
+^(maf) (\br[0-9a-f]\b|(?!(?:\bmaf\b|\bmfa\b|\bmif\b|\bmfr\b|\bmrf\b))\w+)$
 
-"mfa" "0b0001"
+"mfa" "0b0001" - opcode, register
 
-"mif" "0b0010"
+"mif" "0b0010" - opcode, register, immediate
 
-"mfr" "0b0011"
+"mfr" "0b0011" - opcode, register, register, register
 
-"mrf" "0b0100"
+"mrf" "0b0100" - opcode, register, register, register
 
-"add" "0b0101"
+"add" "0b0101" - opcode, register
 
-"sub" "0b0110"
+"sub" "0b0110" - opcode, register
 
-"ior" "0b0111"
+"ior" "0b0111" - opcode, register
 
-"xor" "0b1000"
+"xor" "0b1000" - opcode, register
 
-"and" "0b1001"
+"and" "0b1001" - opcode, register
 
-"inc" "0b1010"
+"inc" "0b1010" - opcode
 
-"lrs" "0b1011"
+"lrs" "0b1011" - opcode
 
-"brh" "0b1100"
+"brh" "0b1100" - opcode, register, immediate
 
-"bil" "0b1101"
+"bil" "0b1101" - opcode, register, immediate
 
-"bge" "0b1110"
+"bge" "0b1110" - opcode, register, immediate
 
-"bie" "0b1111"
+"bie" "0b1111" - opcode, register, immediate

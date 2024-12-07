@@ -23,6 +23,26 @@ https://georgjz.github.io/wyvern-01/
 https://student.cs.uwaterloo.ca/~cs241/slides/sylvie/Sylvie-L5.pdf
 
 
+instruction mnemonic
+variable
+constant
+label
+definition for instruction mnemonic (begin, end, definition) - include in an import file
+register
+unsigned integer
+signed integer
+comment
+
+1st run:
+remove whitespaces
+remove leading and trailing spaces
+remove comments
+casefold everything
+
+2nd run:
+create reserved words table
+create symbols table (symbol, symboltype)
+types can be constant, variable, label or definition
 
 
 preprocess stuff (whitespaces, comments etc)
@@ -30,7 +50,7 @@ preprocess stuff (whitespaces, comments etc)
 lexical analysis
 turn assembly into a stream of tokens (tokentype, tokenvalue)
 create symbol table (variables, constants, arrays etc)
-
+reserved word table
 
 syntax analysis
 check all tokens to see if they match the syntax
@@ -53,4 +73,4 @@ assumes preprocessing will strip all leading and trailing whitespace and comment
 
 4th attempt
 preprocessor should also casefold everything - also simplifies regex
-^([mM][aA][fF]) r[0-9a-fA-F|(?!(?:\bmaf\b|\bmfa\b|\bmif\b|\bmfr\b|\bmrf\b))\w+)$
+^(maf) (\br[0-9a-f]\b|(?!(?:\bmaf\b|\bmfa\b|\bmif\b|\bmfr\b|\bmrf\b))\w+)$

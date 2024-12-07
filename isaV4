@@ -6,6 +6,8 @@
 ; v4 still has some issues - brh can only branch to 65536 locations which limits program size
 ; this is the same with mfr, mrf - only can access 65536 locations.
 ; will need to rectify this - swap to 24 or maybe even 32 bit addressing modes in v5? really only for graphical programs with large frame buffers.
+; brh instruction does not really conform - could be changed to opcode, register, register, register for 24 bit addressing in future.
+; brh only saves 1 instruction currently by not needing lower 8 bits to be loaded into a pointer register first.
 
 mnemonic Opcode Definition
 "maf" "0b0000" move accumulator to registerFile[operand1]
