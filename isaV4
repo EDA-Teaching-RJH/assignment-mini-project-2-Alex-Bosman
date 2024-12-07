@@ -1,0 +1,26 @@
+; 8 bit cpu instruction set V4
+; mini project 2 emulator and assembler uses this instruction set
+; makes bil, bge, bie into indirect branching.
+; OLD - (operand2 is the destination that replaces lower 8 bits of the program counter)
+; NEW - (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
+; v4 still has some issues - brh can only branch to 65536 locations which limits program size
+; this is the same with mfr, mrf - only can access 65536 locations.
+; will need to rectify this - swap to 24 or maybe even 32 bit addressing modes in v5? really only for graphical programs with large frame buffers.
+
+mnemonic Opcode Definition
+"maf" "0b0000" move accumulator to registerFile[operand1]
+"mfa" "0b0001" move registerFile[operand1] to accumulator
+"mif" "0b0010" move immediate to registerFile (next byte/instruction (operand2) is taken as immediate)
+"mfr" "0b0011" move registerFile to ram/memorybus (operand1 as register, operand2 upper as upper pointer address, operand2 lower as lower pointer address)
+"mrf" "0b0100" move ram/memorybus to registerfile (operand1 as register, operand2 upper as upper pointer address, operand2 lower as lower pointer address)
+"add" "0b0101" accumulator = accumulator + registerFile[operand1]
+"sub" "0b0110" accumulator = accumulator - registerFile[operand1]
+"ior" "0b0111" accumulator = accumulator OR registerFile[operand1]
+"xor" "0b1000" accumulator = accumulator XOR registerFile[operand1]
+"and" "0b1001" accumulator = accumulator AND registerFile[operand1]
+"inc" "0b1010" accumulator = accumulator + 1 (is incremented)
+"lrs" "0b1011" accumulator = accumulator >> 1 (logical right shift)
+"brh" "0b1100" branch unconditionally. (operand1 is used as upper pointer, operand2 is taken as lower 8 bits)
+"bil" "0b1101" branch if accumulator is less than registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
+"bge" "0b1110" branch if accumulator is greater or equal than registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
+"bie" "0b1111" branch if accumulator is equal to registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)

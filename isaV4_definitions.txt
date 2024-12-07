@@ -1,0 +1,39 @@
+{"0b0000":{mnemonic:maf, regex:}}
+
+keywords:
+
+
+
+
+"maf" "0b0000"
+^([mM][aA][fF]) (\br[0-9a-fA-F]\b|(?!(?:\bhello\b|\bbob\b))\w+)$
+
+"mfa" "0b0001"
+
+"mif" "0b0010"
+
+"mfr" "0b0011"
+
+"mrf" "0b0100"
+
+"add" "0b0101"
+
+"sub" "0b0110"
+
+"ior" "0b0111"
+
+"xor" "0b1000"
+
+"and" "0b1001"
+
+"inc" "0b1010"
+
+"lrs" "0b1011"
+
+"brh" "0b1100"
+
+"bil" "0b1101"
+
+"bge" "0b1110"
+
+"bie" "0b1111"

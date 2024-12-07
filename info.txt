@@ -39,3 +39,18 @@ semantic analysis
 check operations etc, e.g. not loading a variable as an immediate etc.
 
 code generation
+
+
+1st regex attempt at matching maf (register or word, (but not special characters))
+^\t+([mM][aA][fF]) (\bx[0-9a-fA-F]\b|\b(?!(?:hello|bob))\w+)
+
+2nd attempt (will match ONLY required syntax)
+^\t+([mM][aA][fF]) (\bx[0-9a-fA-F]\b|\b(?!(?:hello|bob))\w+)$
+
+3rd attempt
+assumes preprocessing will strip all leading and trailing whitespace and comments
+^([mM][aA][fF]) (\bx[0-9a-fA-F]\b|\b(?!(?:hello|bob))\w+)$
+
+4th attempt
+preprocessor should also casefold everything - also simplifies regex
+^([mM][aA][fF]) r[0-9a-fA-F|(?!(?:\bmaf\b|\bmfa\b|\bmif\b|\bmfr\b|\bmrf\b))\w+)$
