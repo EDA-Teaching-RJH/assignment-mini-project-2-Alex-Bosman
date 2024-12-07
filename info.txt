@@ -1,0 +1,41 @@
+planned features (may change over time):
+
+assemble code
+comments
+line breaks for each instruction
+indentation
+assembler definitions - what version of isa am i using
+labels - very high priority
+macros - user define and load in with a header file???
+header files???
+where to start the code from - line number?
+constants
+variables
+.word, value (convert 2s compliment)
+procedures/functions
+gui?
+dissassembler?? - only if I have time
+I/O devices for cpu? - only if i have time
+
+[label] [opcode] [operand1] [operand2] [operand3] [comments]
+https://learntinkerbuild.com/2021/04/17/writing-an-assembler-part-1/
+https://georgjz.github.io/wyvern-01/
+https://student.cs.uwaterloo.ca/~cs241/slides/sylvie/Sylvie-L5.pdf
+
+
+
+
+preprocess stuff (whitespaces, comments etc)
+
+lexical analysis
+turn assembly into a stream of tokens (tokentype, tokenvalue)
+create symbol table (variables, constants, arrays etc)
+
+
+syntax analysis
+check all tokens to see if they match the syntax
+
+semantic analysis
+check operations etc, e.g. not loading a variable as an immediate etc.
+
+code generation
