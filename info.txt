@@ -24,14 +24,14 @@ https://student.cs.uwaterloo.ca/~cs241/slides/sylvie/Sylvie-L5.pdf
 
 
 instruction mnemonic
-variable
-constant
+literal (a constant number - will need to be checked if it can fit)
 label
-definition for instruction mnemonic (begin, end, definition) - include in an import file
 register
-unsigned integer
-signed integer
-comment
+
+
+definition for instruction mnemonic (begin, end, definition) - include in an import file
+
+
 
 1st run:
 remove whitespaces
@@ -74,3 +74,7 @@ assumes preprocessing will strip all leading and trailing whitespace and comment
 4th attempt
 preprocessor should also casefold everything - also simplifies regex
 ^(maf) (\br[0-9a-f]\b|(?!(?:\bmaf\b|\bmfa\b|\bmif\b|\bmfr\b|\bmrf\b))\w+)$
+
+5th attempt
+can remove the exlusion of reserved words as next stage will throw an error anyway if this is incorrect.
+^(maf) (\br[0-9a-f]\b|\w+)$

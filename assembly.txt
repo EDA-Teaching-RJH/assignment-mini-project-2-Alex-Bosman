@@ -6,7 +6,7 @@
 ; some numbers will not work as they cause the ALU to over flow.
 ; there is no overflow detection in this program.
 
-
+#define testdefine 5
 ; Inital Setup
 start:    
     mif 15 34; move 34 into gp15 - collatz number to test                       0

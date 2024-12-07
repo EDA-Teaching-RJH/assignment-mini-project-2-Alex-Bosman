@@ -26,3 +26,50 @@ mnemonic Opcode Definition
 "bil" "0b1101" branch if accumulator is less than registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
 "bge" "0b1110" branch if accumulator is greater or equal than registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
 "bie" "0b1111" branch if accumulator is equal to registerFile[operand1] (operand2 will be taken as an 8 bit signed value (-128 to +127) which is added to the current PC address)
+
+
+
+
+
+typeA - opcode
+typeB - opcode, operand1
+typeC - opcode, operand1, operand2
+typeD - opcode, operand1, operand2, operand3
+
+typeA regex (opcode)
+^({opcode})$
+
+typeB regex (opcode, register)
+^(opcode) (r[0-9a-f]|\w+)$
+
+typeC regex (opcode, register, immediate)
+^(opcode) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$
+
+typeD regex (opcode, register, register, register)
+^(opcode) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$
+
+label regex
+^\w+:$
+
+define constant regex
+^#define (\w+) (-\d+|\d+)$
+
+
+
+
+
+"mfa" "0b0001" - opcode, register
+"mif" "0b0010" - opcode, register, immediate
+"mfr" "0b0011" - opcode, register, register, register
+"mrf" "0b0100" - opcode, register, register, register
+"add" "0b0101" - opcode, register
+"sub" "0b0110" - opcode, register
+"ior" "0b0111" - opcode, register
+"xor" "0b1000" - opcode, register
+"and" "0b1001" - opcode, register
+"inc" "0b1010" - opcode
+"lrs" "0b1011" - opcode
+"brh" "0b1100" - opcode, register, immediate
+"bil" "0b1101" - opcode, register, immediate
+"bge" "0b1110" - opcode, register, immediate
+"bie" "0b1111" - opcode, register, immediate

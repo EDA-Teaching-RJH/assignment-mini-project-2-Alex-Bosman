@@ -10,14 +10,16 @@ typeA regex (opcode)
 ^({opcode})$
 
 typeB regex (opcode, register)
-^({opcode}) (\br[0-9a-f]\b|(?!(?:\b{reservedWord1}\b|\b{reservedWord2etc}\b))\w+)$
+^(opcode) (r[0-9a-f]|\w+)$
 
 typeC regex (opcode, register, immediate)
-
+^(opcode) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$
 
 typeD regex (opcode, register, register, register)
+^(opcode) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$
 
-
+label regex
+^\w+:$
 
 
 "maf" "0b0000" - opcode, register
