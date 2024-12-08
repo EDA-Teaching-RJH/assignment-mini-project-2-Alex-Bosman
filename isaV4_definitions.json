@@ -1,0 +1,29 @@
+
+{
+    "instructions" : {
+        "maf" : {"opcode" : "0b0000", "instructionType" : "typeB"},
+        "mfa" : {"opcode" : "0b0001", "instructionType" : "typeB"},
+        "mif" : {"opcode" : "0b0010", "instructionType" : "typeC"},
+        "mfr" : {"opcode" : "0b0011", "instructionType" : "typeD"},
+        "mrf" : {"opcode" : "0b0100", "instructionType" : "typeD"},
+        "add" : {"opcode" : "0b0101", "instructionType" : "typeB"},
+        "sub" : {"opcode" : "0b0110", "instructionType" : "typeB"},
+        "ior" : {"opcode" : "0b0111", "instructionType" : "typeB"},
+        "xor" : {"opcode" : "0b1000", "instructionType" : "typeB"},
+        "and" : {"opcode" : "0b1001", "instructionType" : "typeB"},
+        "inc" : {"opcode" : "0b1010", "instructionType" : "typeA"},
+        "lrs" : {"opcode" : "0b1011", "instructionType" : "typeA"},
+        "brh" : {"opcode" : "0b1100", "instructionType" : "typeC"},
+        "bil" : {"opcode" : "0b1101", "instructionType" : "typeC"},
+        "bge" : {"opcode" : "0b1110", "instructionType" : "typeC"},
+        "bie" : {"opcode" : "0b1111", "instructionType" : "typeC"}
+    },
+    "macros" : {
+        "nop" : ["maf r0"],
+        "xnor r1" : ["lim rd 255", "xor r1", "xor rd"],
+        "nand r1" : ["lim rd 255", "and r1", "xor rd"],
+        "nor r1" : ["lim rd 255", "ior r1", "xor rd"],
+        "not r1" : ["lim rd 255", "xor rd"],
+        "lls r1": ["mfa r1", "add r1"]
+    }
+}

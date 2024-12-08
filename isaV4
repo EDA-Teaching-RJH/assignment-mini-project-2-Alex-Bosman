@@ -57,7 +57,7 @@ define constant regex
 
 
 
-
+"maf" "0b0000" - opcode, register
 "mfa" "0b0001" - opcode, register
 "mif" "0b0010" - opcode, register, immediate
 "mfr" "0b0011" - opcode, register, register, register
