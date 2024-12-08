@@ -85,8 +85,49 @@ class assembler:
             if literal is not None:
                 self.SYMBOLS.append((index, literal))
 
-        
+        # tokenise assemblyArray into tokenArray
 
+        #^\w+:$
+        #^({opcode})$
+        #^(opcode) (r[0-9a-f]|\w+)$
+        #^(opcode) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$
+        #^(opcode) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$
+
+
+        # token format
+        # (tokentype, )
+
+        tokens = []
+        tokens.append(labelRegex)
+        tokens.append(literalRegex)
+        for instruction in self.ISADATA["instructions"]:
+            instructionType = self.ISADATA["instructions"][instruction]["instructionType"]
+            match instructionType:
+                case "typeA": tokens.append(re.compile(f"^({instruction})$"))
+                case "typeB": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+)$"))
+                case "typeC": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$"))
+                case "typeD": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$"))
+                case _: print("Error, unknown instruction type encountered.")
+
+        tokenArray = []
+#        for index, value in enumerate(assemblyArray):
+#            for x in 
+#            print(re.findall(tokens[0], assemblyArray[index]))
+
+        for line in assemblyArray:
+            MATCHFLAG = False
+            for token in tokens:
+                if re.findall(token, line):
+                    MATCHFLAG = True
+                    break
+            if MATCHFLAG:
+                tokenArray.append((token, re.findall(token, line)))
+            else:
+                print(f"Invalid instruction found: {line}")
+
+        print("")
+        print(tokenArray)
+        print("")
 
 
 
