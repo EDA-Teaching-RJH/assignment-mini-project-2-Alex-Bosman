@@ -8,6 +8,9 @@ class assembler:
         self.program = []
         self.ISADATA = ISAData
 
+        #temp
+        self.ERRORLOG = []
+
 
 
 
@@ -20,10 +23,9 @@ class assembler:
 
         self.lexicalAnalysis(assemblyArray)
 
-        print(self.RESERVEDWORDS)
-        print(self.SYMBOLS)
+        self.syntaxAndSemanticAnalysis(assemblyArray)
 
-        self.syntaxAnalysis(assemblyArray)
+        print(f"Errors: {self.ERRORLOG}")
 
 
 
@@ -72,7 +74,7 @@ class assembler:
         self.RESERVEDWORDS += [x.split()[0] for x in list(self.ISADATA["pseudoInstructions"].keys())] # add pseudoinstructions
         self.RESERVEDWORDS += [f"r{i:x}" for i in range(0, 16)] # add registers
 
-        labelRegex = re.compile("^\w+:$")
+        labelRegex = re.compile("^(\w+):$")
         literalRegex = re.compile("^#define (\w+) (-\d+|\d+)$")
 
         # iterate through and add all labels and literals to the symbols table
@@ -87,53 +89,55 @@ class assembler:
 
         # tokenise assemblyArray into tokenArray
 
-        #^\w+:$
-        #^({opcode})$
-        #^(opcode) (r[0-9a-f]|\w+)$
-        #^(opcode) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$
-        #^(opcode) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$
-
-
-        # token format
-        # (tokentype, )
-
+        # create an array for tokens to be stored
         tokens = []
-        tokens.append(labelRegex)
-        tokens.append(literalRegex)
+
+        # add the regex statements for any assember-specific features (e.g labels, constant definition statement etc)
+        tokens.append(("label", labelRegex))
+        tokens.append(("constant", literalRegex))
+
+        # add the regex statements for all instructions
         for instruction in self.ISADATA["instructions"]:
             instructionType = self.ISADATA["instructions"][instruction]["instructionType"]
             match instructionType:
-                case "typeA": tokens.append(re.compile(f"^({instruction})$"))
-                case "typeB": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+)$"))
-                case "typeC": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$"))
-                case "typeD": tokens.append(re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$"))
-                case _: print("Error, unknown instruction type encountered.")
+                # TODO - additional feature could pass these in with the ISA definitions - then user can also redefine these.
+                case "typeA": tokens.append((instructionType, re.compile(f"^({instruction})$")))
+                case "typeB": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+)$")))
+                case "typeC": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$")))
+                case "typeD": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$")))
+                case _: print("Error, unknown instruction type encountered - please check isa definitions.")
 
+        # create an array for tokens to be stored
         tokenArray = []
-#        for index, value in enumerate(assemblyArray):
-#            for x in 
-#            print(re.findall(tokens[0], assemblyArray[index]))
-
         for line in assemblyArray:
             MATCHFLAG = False
             for token in tokens:
-                if re.findall(token, line):
+                if re.findall(token[1], line):
                     MATCHFLAG = True
                     break
             if MATCHFLAG:
-                tokenArray.append((token, re.findall(token, line)))
+                tokenArray.append((token[0], re.findall(token[1], line)[0]))
             else:
                 print(f"Invalid instruction found: {line}")
-
-        print("")
+                self.ERRORLOG.append(line)
+        
         print(tokenArray)
-        print("")
+        
+        # iterate through entire token array and make sure that all constants and labels are declared correctly
+        # this can be done by using the reserved words and symbols tables
+
+        #for token in tokenArray:
 
 
 
-    def syntaxAnalysis(self, assemblyArray):
+
+
+    def syntaxAndSemanticAnalysis(self, tokenArray):
+        # check if reserved word is being used
+        # check constant sizes - e.g cant have a constant >255 being used as an immediate
         pass
 
+    
 
 
 
