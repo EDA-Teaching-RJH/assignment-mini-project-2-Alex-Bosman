@@ -18,7 +18,7 @@
         "bge" : {"opcode" : "0b1110", "instructionType" : "typeC"},
         "bie" : {"opcode" : "0b1111", "instructionType" : "typeC"}
     },
-    "macros" : {
+    "pseudoInstructions" : {
         "nop" : ["maf r0"],
         "xnor r1" : ["lim rd 255", "xor r1", "xor rd"],
         "nand r1" : ["lim rd 255", "and r1", "xor rd"],

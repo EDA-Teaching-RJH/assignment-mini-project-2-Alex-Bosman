@@ -28,32 +28,32 @@ class assembler:
         # preprocessing
         # remove all blank lines, comments and whitespaces
         cleanedArray = [x.split(";")[0].strip().casefold() for x in self.program if x.split(";")[0].strip().casefold() != ""]
-        # get regex definitions for all macros
-        macros = [(macro, re.compile(f"^{macro}$"), self.ISADATA["macros"][macro]) for macro in self.ISADATA["macros"]]
+
+        # a pseudo-instruction is an instruction provided by the assembler that will get translated into multiple other real instructions
+        # these instructions do not translate directly into machine code so must be translated into multiple normal instructions first
+        # get regex definitions for all pseudo-instructions
+        #pseudoInstruction
+        pseudoInstructions = [(x, re.compile(f"^{x}$"), self.ISADATA["pseudoInstructions"][x]) for x in self.ISADATA["pseudoInstructions"]]
 
         print("")
-        print(macros)
+        print(pseudoInstructions)
         print("")
 
         assemblyArray = []
         for index, line in enumerate(cleanedArray):
             MATCHFLAG = False
-            for macro in macros:
-                if re.findall(macro[1], line):
-                    substitution = macro[2]
+            for x in pseudoInstructions:
+                if re.findall(x[1], line):
+                    substitution = x[2]
                     MATCHFLAG = True
                     break
             if MATCHFLAG:
                 assemblyArray += substitution
-                print("a macro found")
+                print("a pseudoInstruction found")
             else:
                 assemblyArray.append(line)
         print(assemblyArray)
         print("")
-        # replace all macros with assembly
-        #for index, line in enumerate(assemblyArray):
-        #    for x in macroRegex:
-        #        newLine = re.sub(x, )
 
         return assemblyArray
 
