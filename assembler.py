@@ -19,12 +19,8 @@ class assembler:
         self.program = program
 
         assemblyArray = self.preProcessing()
-
-        #print(assemblyArray)
-
-        self.lexicalAnalysis(assemblyArray)
-
-        self.syntaxAndSemanticAnalysis(assemblyArray)
+        tokenArray = self.lexicalAnalysis(assemblyArray)
+        self.syntaxAndSemanticAnalysis(tokenArray)
 
         print(f"Errors: {self.ERRORLOG}")
 
@@ -77,7 +73,8 @@ class assembler:
         self.RESERVEDWORDS += [f"r{i:x}" for i in range(0, 16)] # add registers
 
         labelRegex = re.compile("^(\w+):$")
-        literalRegex = re.compile("^#define (\w+) (-\d+|\d+)$")
+        literalRegex = re.compile("^.constant (\w+) (-\d+|\d+)$")
+        registerRenameRegex = re.compile("^.register (\w+) (r[0-9a-f])$")
 
         # iterate through and add all labels and literals to the symbols table
         # this is done so when assembling the code, any constant reference can be replaced with the actual value and any label can be replaced with location
@@ -136,35 +133,38 @@ class assembler:
                 print(f"Invalid instruction found: {line}")
                 self.ERRORLOG.append(line)
         
-        print(tokenArray)
-        print("")
-        print(self.LITERALVALUES)
-        #print(self.RESERVEDWORDS, self.SYMBOLS)
+
+        return tokenArray
+        #print(tokenArray)
+        #print("")
+        #print(self.LITERALVALUES)
+        ##print(self.RESERVEDWORDS, self.SYMBOLS)
         
 
 
 
+
+
+
+
+    def syntaxAndSemanticAnalysis(self, tokenArray):
+        # check if reserved word or symbol is being used as an operand
         # iterate through entire token array and make sure that all constants and labels are declared correctly
         # this can be done by using the reserved words and symbols tables
+        # labels will be in typeC instruction  (will need to convert label to integer and also add extra branch statements if needed)
+        # literals will only be in typeC (mif)
+        # literals must be 0-255 or -128 to 127
 
-        #for token in tokenArray:
-        #    if 
-        #    for operand in token[]
 
-
+        # check if reserved word or symbol is being used as an operand - effects typeC only
 
 
         # now remove any assember only tokens apart from labels as about to assemble, e.g. literals
         tokenArray = [x for x in tokenArray if x[0] != "literal"]
 
-
-
-    def syntaxAndSemanticAnalysis(self, tokenArray):
-        # check if reserved word is being used
-        # check constant sizes - e.g cant have a constant >255 being used as an immediate
-        pass
-
     
+        pass
+    #### TODO - add feature to rename registers - cannot be constants
 
 
 
