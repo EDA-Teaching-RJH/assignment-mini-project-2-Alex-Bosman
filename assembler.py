@@ -5,6 +5,7 @@ class assembler:
     def __init__(self, ISAData):
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
+        self.LITERALVALUES = {}
         self.program = []
         self.ISADATA = ISAData
 
@@ -19,7 +20,7 @@ class assembler:
 
         assemblyArray = self.preProcessing()
 
-        print(assemblyArray)
+        #print(assemblyArray)
 
         self.lexicalAnalysis(assemblyArray)
 
@@ -67,6 +68,7 @@ class assembler:
         # also create a symbols table (any user defined labels or literals)
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
+        self.LITERALVALUES = {}
 
         # add all instructions, pseudoinstructions and any additional assembler reserved words to reserved word table
         self.RESERVEDWORDS = []
@@ -79,13 +81,26 @@ class assembler:
 
         # iterate through and add all labels and literals to the symbols table
         # this is done so when assembling the code, any constant reference can be replaced with the actual value and any label can be replaced with location
-        for index, line in enumerate(assemblyArray):
-            label = labelRegex.search(line)
-            literal = literalRegex.search(line)
-            if label is not None:
-                self.SYMBOLS.append((index, label))
-            if literal is not None:
-                self.SYMBOLS.append((index, literal))
+        for line in assemblyArray:
+            label = labelRegex.findall(line)
+            literal = literalRegex.findall(line)
+            if label != []:
+                # check the label is not in the reserved words table or already exists
+                if label[0] in self.SYMBOLS:
+                    self.ERRORLOG.append(f"label is already defined: {label[0]}")
+                elif label[0] in self.RESERVEDWORDS:
+                    self.ERRORLOG.append(f"label is using a reserved keyword: {label[0]}")
+                else:
+                    self.SYMBOLS.append(label[0])
+            if literal != []:
+                if literal[0][0] in self.SYMBOLS:
+                    self.ERRORLOG.append(f"literal is already defined: {literal[0]}")
+                elif literal[0][0] in self.RESERVEDWORDS:
+                    self.ERRORLOG.append(f"literal is using a reserved keyword: {literal[0]}")
+                else:
+                    self.SYMBOLS.append(literal[0][0])
+                    self.LITERALVALUES[literal[0][0]] = literal[0][1]
+
 
         # tokenise assemblyArray into tokenArray
 
@@ -122,13 +137,25 @@ class assembler:
                 self.ERRORLOG.append(line)
         
         print(tokenArray)
+        print("")
+        print(self.LITERALVALUES)
+        #print(self.RESERVEDWORDS, self.SYMBOLS)
         
+
+
+
         # iterate through entire token array and make sure that all constants and labels are declared correctly
         # this can be done by using the reserved words and symbols tables
 
         #for token in tokenArray:
+        #    if 
+        #    for operand in token[]
 
 
+
+
+        # now remove any assember only tokens apart from labels as about to assemble, e.g. literals
+        tokenArray = [x for x in tokenArray if x[0] != "literal"]
 
 
 

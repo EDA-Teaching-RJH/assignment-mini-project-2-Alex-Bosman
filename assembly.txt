@@ -6,9 +6,9 @@
 ; some numbers will not work as they cause the ALU to over flow.
 ; there is no overflow detection in this program.
 
-#define testdefine 5
+#define testlabel 23
 ; Inital Setup
-start:    
+start:   
     mif 15 34; move 34 into gp15 - collatz number to test                       0
     mif 1 1; move 1 into gp1 - for AND mask (even or odd checking)              2
 ; Beginning
@@ -23,8 +23,6 @@ start:
 loop_inf:
     bie 1 loop_inf; branch if equal to 1 (program stop condition)              11
     brh 0 start; goto Beginning                                                13
-
-
 ;Is Odd (3n+1)
 is_odd:
     mfa 15; move gp15 to acc                                                   15
