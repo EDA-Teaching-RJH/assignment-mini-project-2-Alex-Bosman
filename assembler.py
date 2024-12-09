@@ -5,7 +5,7 @@ class assembler:
     def __init__(self, ISAData):
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
-        self.LITERALVALUES = {}
+        self.SYMBOLVALUES = {}
         self.program = []
         self.ISADATA = ISAData
 
@@ -74,13 +74,14 @@ class assembler:
 
         labelRegex = re.compile("^(\w+):$")
         literalRegex = re.compile("^.constant (\w+) (-\d+|\d+)$")
-        registerRenameRegex = re.compile("^.register (\w+) (r[0-9a-f])$")
+        registerReferenceRegex = re.compile("^.register (\w+) (r[0-9a-f])$")
 
         # iterate through and add all labels and literals to the symbols table
         # this is done so when assembling the code, any constant reference can be replaced with the actual value and any label can be replaced with location
         for line in assemblyArray:
             label = labelRegex.findall(line)
             literal = literalRegex.findall(line)
+            registerReference = registerReferenceRegex.findall(line)
             if label != []:
                 # check the label is not in the reserved words table or already exists
                 if label[0] in self.SYMBOLS:
@@ -96,8 +97,15 @@ class assembler:
                     self.ERRORLOG.append(f"literal is using a reserved keyword: {literal[0]}")
                 else:
                     self.SYMBOLS.append(literal[0][0])
-                    self.LITERALVALUES[literal[0][0]] = literal[0][1]
-
+                    self.SYMBOLVALUES[literal[0][0]] = literal[0][1]
+            if registerReference != []:
+                if registerReference[0][0] in self.SYMBOLS:
+                    self.ERRORLOG.append(f"registerReference is already defined: {literal[0]}")
+                elif registerReference[0][0] in self.RESERVEDWORDS:
+                    self.ERRORLOG.append(f"registerReference is using a reserved keyword: {literal[0]}")
+                else:
+                    self.SYMBOLS.append(registerReference[0][0])
+                    self.SYMBOLVALUES[registerReference[0][0]] = registerReference[0][1]
 
         # tokenise assemblyArray into tokenArray
 
@@ -107,6 +115,7 @@ class assembler:
         # add the regex statements for any assember-specific features (e.g labels, constant definition statement etc)
         tokens.append(("label", labelRegex))
         tokens.append(("constant", literalRegex))
+        tokens.append(("registerReference", registerReferenceRegex))
 
         # add the regex statements for all instructions
         for instruction in self.ISADATA["instructions"]:
@@ -131,7 +140,7 @@ class assembler:
                 tokenArray.append((token[0], re.findall(token[1], line)[0]))
             else:
                 print(f"Invalid instruction found: {line}")
-                self.ERRORLOG.append(line)
+                self.ERRORLOG.append(f"Invalid instruction found: {line}")
         
 
         return tokenArray
@@ -148,6 +157,8 @@ class assembler:
 
 
     def syntaxAndSemanticAnalysis(self, tokenArray):
+        print(tokenArray)
+        print(self.SYMBOLVALUES)
         # check if reserved word or symbol is being used as an operand
         # iterate through entire token array and make sure that all constants and labels are declared correctly
         # this can be done by using the reserved words and symbols tables
@@ -156,7 +167,7 @@ class assembler:
         # literals must be 0-255 or -128 to 127
 
 
-        # check if reserved word or symbol is being used as an operand - effects typeC only
+        # check if reserved word or symbol is being used as an operand - effects typeC only (but only if register references not used - TODO)
 
 
         # now remove any assember only tokens apart from labels as about to assemble, e.g. literals
