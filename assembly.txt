@@ -7,20 +7,21 @@
 ; there is no overflow detection in this program.
 
 .define testlabel 23
-.register register r15
+.register register132 r1
+.register r15 rf
 
 ; Inital Setup
 start:
     mif r15 34; move 34 into gp15 - collatz number to test                       0
-    mif r1 1; move 1 into gp1 - for AND mask (even or odd checking)              2
+    mif register132 1; move 1 into gp1 - for AND mask (even or odd checking)     2
 ; Beginning
     mfa r1; move AND mask (00000001) into accumulator                            4
     and r15; accumulator = accumulator AND gp15 (masks all bits except 0 bit)    5
     bie r1 is_odd; branch to Is Odd if odd, else continue if even                6
 
 ; since no branch, the number must be even (n/2)
-    mfa register15; move gp15 to accumulator                                            8
-    lrs; logical right shift accumulator                                        9
+    mfa r15; move gp15 to accumulator                                            8
+    lrs; logical right shift accumulator                                         9
     maf r15; move halved result back to gp15                                    10
 loop_inf:
     bie r1 loop_inf; branch if equal to 1 (program stop condition)              11
@@ -28,8 +29,8 @@ loop_inf:
 ;Is Odd (3n+1)
 is_odd:
     mfa r15; move gp15 to acc                                                   15
-    add register15; doubled                                                            16
+    add r15; doubled                                                            16
     add r15; tripled                                                            17
-    inc; add 1                                                                 18
+    inc; add 1                                                                  18
     maf r15; move back to gp15                                                  19
     brh r0 start; goto Beginning                                                20

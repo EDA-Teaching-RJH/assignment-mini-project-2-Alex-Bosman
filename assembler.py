@@ -5,6 +5,7 @@ class assembler:
     def __init__(self, ISAData):
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
+        self.REGISTERNAMES = []
         self.SYMBOLTYPES = {}
         self.SYMBOLVALUES = {}
         self.assemblerSpecificTokens = ("literal", "registerReference", "label")
@@ -74,6 +75,7 @@ class assembler:
         self.RESERVEDWORDS += list(self.ISADATA["instructions"].keys()) # add instructions
         self.RESERVEDWORDS += [x.split()[0] for x in list(self.ISADATA["pseudoInstructions"].keys())] # add pseudoinstructions
         self.RESERVEDWORDS += [f"r{i:x}" for i in range(0, 16)] # add registers
+        self.REGISTERNAMES = [f"r{i:x}" for i in range(0, 16)] # add registers to registername array (for syntax and semantic checking)
 
         labelRegex = re.compile("^([A-Za-z]|[A-Za-z]\w+):$")
         literalRegex = re.compile("^.define ([A-Za-z]|[A-Za-z]\w+) (-\d+|\d+)$")
@@ -233,7 +235,6 @@ class assembler:
             
             # skip any assembler specific tokens - these do not need to be checked, only instructions do.
             if token[0] not in self.assemblerSpecificTokens:
-                #print(token)
                 # get the arguments for the specific instruction
                 arguments = instructionTypes[token[0]]
                 # iterate through each instruction argument and check that it is correct if it is an assembler specific argument
@@ -242,7 +243,7 @@ class assembler:
                 # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
                 # if argument = 'blank' or 'opcode' then skip
                 for index, argument in enumerate(arguments):
-                    print(argument, token[1][index])
+
                     if argument == "blank":
                         continue
                     elif argument == "opcode":
@@ -259,13 +260,27 @@ class assembler:
                         else:
                             continue
                     elif (argument == "register") and (token[1][index] in self.SYMBOLTYPES.keys()):
-                        print(self.SYMBOLTYPES[token[1][index]])
-                        print("register found?")
-                        print(token[1][index])
+                        # check if symbol used is actually a register
+                        if self.SYMBOLTYPES[token[1][index]] == "registerReference":
+                            continue
+                        else:
+                            self.ERRORLOG.append(f"(reg) invalid operand used: {token}")
+
                     elif (argument == "immediate") and (token[1][index] in self.SYMBOLTYPES.keys()):
-                        print(self.SYMBOLTYPES[token[1][index]])
-                        print("immediate found?")
-                        print(token[1][index])
+                        # check if symbol used is actually an immediate
+                        if self.SYMBOLTYPES[token[1][index]] == "literal":
+                            continue
+                        else:
+                            self.ERRORLOG.append(f"(imm) invalid operand used: {token}")
+
+                    elif (argument == "register") and (token[1][index] in self.REGISTERNAMES):
+                        # must be a valid register
+                        continue
+                    elif (argument == "immediate") and (token[1][index]):
+                        # check if within range
+                        continue
+                    else:
+                        self.ERRORLOG.append(f"undefined operand found: {token}")
 
             #type(test_tup) is tuple
 
