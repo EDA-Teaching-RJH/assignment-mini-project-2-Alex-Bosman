@@ -1,0 +1,56 @@
+
+{
+    "instructions" : {
+        "maf" : {"opcode" : "0000", "instructionType" : "typeB"},
+        "mfa" : {"opcode" : "0001", "instructionType" : "typeB"},
+        "mif" : {"opcode" : "0010", "instructionType" : "typeC"},
+        "mfr" : {"opcode" : "0011", "instructionType" : "typeD"},
+        "mrf" : {"opcode" : "0100", "instructionType" : "typeD"},
+        "add" : {"opcode" : "0101", "instructionType" : "typeB"},
+        "sub" : {"opcode" : "0110", "instructionType" : "typeB"},
+        "ior" : {"opcode" : "0111", "instructionType" : "typeB"},
+        "xor" : {"opcode" : "1000", "instructionType" : "typeB"},
+        "and" : {"opcode" : "1001", "instructionType" : "typeB"},
+        "inc" : {"opcode" : "1010", "instructionType" : "typeA"},
+        "lrs" : {"opcode" : "1011", "instructionType" : "typeA"},
+        "brh" : {"opcode" : "1100", "instructionType" : "typeC"},
+        "bil" : {"opcode" : "1101", "instructionType" : "typeC"},
+        "bge" : {"opcode" : "1110", "instructionType" : "typeC"},
+        "bie" : {"opcode" : "1111", "instructionType" : "typeC"}
+    },
+    "pseudoInstructions" : {
+        "nop" : ["maf r0"],
+        "xnor {register}" : ["lim rd 255", "xor {register}", "xor rd"],
+        "nand {register}" : ["lim rd 255", "and {register}", "xor rd"],
+        "nor {register}" : ["lim rd 255", "ior {register}", "xor rd"],
+        "not {register}" : ["lim rd 255", "xor rd"],
+        "lls {register}" : ["mfa {register}", "add {register}"],
+        "jmp {label}" : ["lim re {takenUpperPointer}", "brh re {takenLowerPointer}"],
+        "jmp= {register} {label}" : ["bie {register} {branchLineOffset}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}"],
+        "jmp!= {register} {label}" : ["bie {register} {branchLineOffset}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}"],
+        "jmp> {register} {label}" : ["bil {register} {branchLineOffset}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}"],
+        "jmp< {register} {label}" : ["bil {register} {branchLineOffset}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}"],
+        "jmp>= {register} {label}" : ["bge {register} {branchLineOffset}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}"],
+        "jmp<= {register} {label}" : ["bge {register} {branchLineOffset}", "lim re {takenUpperPointer}", "brh re {takenLowerPointer}", "lim re {notTakenUpperPointer}", "brh re {notTakenLowerPointer}"],
+        "write {register} {memoryLocation}" : ["lim re {upperPointer}", "lim rf {lowerPointer}", "mfr {register} {upperPointer} {lowerPointer}"],
+        "read {register} {memoryLocation}" : ["lim re {upperPointer}", "lim rf {lowerPointer}", "mrf {register} {upperPointer} {lowerPointer}"]
+
+
+    },
+    "InstructionTypes" : {
+        "typeA" : ["opcode", "blank"],
+        "typeB" : ["opcode", "register"],
+        "typeC" : ["opcode", "register", "immediate"],
+        "typeD" : ["opcode", "register", "register", "register"]
+    },
+    "assemblyTypes" : {
+        "blank" : "",
+        "register" : "r[0-9a-f]|[A-Za-z]|[A-Za-z]\\w+",
+        "immediate" : "\\d+|[A-Za-z]|[A-Za-z]\\w+"
+    },
+    "assemblyTypeLengths" : {
+        "blank" : 4,
+        "register" : 4,
+        "immediate" : 8
+    }
+}

@@ -216,8 +216,9 @@ class assembler:
 
     def syntaxAndSemanticAnalysis(self, tokenArray):
         print(tokenArray)
+        
         #print(self.SYMBOLS)
-        #print(self.SYMBOLTYPES)
+        print(self.SYMBOLTYPES)
         #print(self.SYMBOLVALUES)
 
         # fetch the instruction types
@@ -232,7 +233,6 @@ class assembler:
             
             # skip any assembler specific tokens - these do not need to be checked, only instructions do.
             if token[0] not in self.assemblerSpecificTokens:
-                print(token)
                 #print(token)
                 # get the arguments for the specific instruction
                 arguments = instructionTypes[token[0]]
@@ -241,18 +241,29 @@ class assembler:
                 # if argument = 'register' then make sure instruction actually uses a register - not a label or literal etc
                 # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
                 # if argument = 'blank' or 'opcode' then skip
-
-                
-                print(arguments)
                 for index, argument in enumerate(arguments):
+                    print(argument, token[1][index])
                     if argument == "blank":
                         continue
                     elif argument == "opcode":
-                        continue
-                    elif argument == "register":
+                        # TODO - this if statement will be removed in future revisions as unfortunately I ran out of time to complete the project so comprimised with this.
+                        # I planned to do a re-write for the pseudoinstructions so you could have proper branching statements 
+                        # however, I ran out of time so the program currently only works for isaV4_definitions and wont work with other instruction sets until i fix this.
+                        # I have hardcoded isa_v4 mnemonics so I could still get branch to label functionality
+                        # in the future this would be replaced by pseudoinstructions so that any instruction set could have branch to label, not just isa_v4
+                        # check out isaV4_definitions_future.json to see the potential pseudoinstruction re-write
+                        # this would also allow you to add in operands instead of just being fixed as well.
+                        branchMnemonics = ("brh", "bie", "bge", "bil")
+                        if token[1][index] in branchMnemonics:
+                            break
+                        else:
+                            continue
+                    elif (argument == "register") and (token[1][index] in self.SYMBOLTYPES.keys()):
+                        print(self.SYMBOLTYPES[token[1][index]])
                         print("register found?")
                         print(token[1][index])
-                    elif argument == "immediate":
+                    elif (argument == "immediate") and (token[1][index] in self.SYMBOLTYPES.keys()):
+                        print(self.SYMBOLTYPES[token[1][index]])
                         print("immediate found?")
                         print(token[1][index])
 
