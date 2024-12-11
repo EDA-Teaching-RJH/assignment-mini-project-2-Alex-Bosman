@@ -26,7 +26,7 @@
         "not r1" : ["lim rd 255", "xor rd"],
         "lls r1": ["mfa r1", "add r1"]
     },
-    "InstructionTypes" : {
+    "instructionTypes" : {
         "typeA" : ["opcode", "blank"],
         "typeB" : ["opcode", "register"],
         "typeC" : ["opcode", "register", "immediate"],
@@ -38,8 +38,10 @@
         "immediate" : "\\d+|[A-Za-z]|[A-Za-z]\\w+"
     },
     "assemblyTypeLengths" : {
+        "opcode" : 4,
         "blank" : 4,
         "register" : 4,
         "immediate" : 8
-    }
+    },
+    "instructionLength" : 8
 }

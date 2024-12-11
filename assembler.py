@@ -23,8 +23,8 @@ class assembler:
 
         assemblyArray = self.preProcessing()
         tokenArray = self.lexicalAnalysis(assemblyArray)
-        machineCodeTokenArray = self.syntaxAndSemanticAnalysis(tokenArray)
-        machineCode = self.codeGeneration(machineCodeTokenArray)
+        absoluteValuesTokenArray = self.syntaxAndSemanticAnalysis(tokenArray)
+        machineCode = self.codeGeneration(absoluteValuesTokenArray)
         print(machineCode)
 
         print(f"Errors: {self.ERRORLOG}")
@@ -152,7 +152,7 @@ class assembler:
 
         # add the regex statements for all instructions
         # fetch the instruction types
-        instructionTypes = self.ISADATA["InstructionTypes"]
+        instructionTypes = self.ISADATA["instructionTypes"]
         # now fetch the assembly type regex statements
         assemblyTypes = self.ISADATA["assemblyTypes"]
         # loop through all the defined instructions and create a token for them using defined instruction types and features
@@ -222,10 +222,10 @@ class assembler:
 
 
         # remove any assember specific tokens apart from labels as about to assemble, e.g. literal definitions, register rename definitions etc.
-        tokenArray = [x for x in tokenArray if (x[0] not in self.assemblerSpecificTokens)]
+        tokenArray = [x for x in tokenArray if ((x[0] not in self.assemblerSpecificTokens) or (x[0] == "label"))]
 
         # fetch the instruction types
-        instructionTypes = self.ISADATA["InstructionTypes"]
+        instructionTypes = self.ISADATA["instructionTypes"]
 
         # check all instructions to make sure literals and register renames are being used in the correct place
         # literals must only be used for 'immediate' type operands, nothing else
@@ -234,104 +234,143 @@ class assembler:
 
         absoluteValuesTokenArray = []
         for token in tokenArray:
-            # get the arguments for the specific instruction
-            arguments = instructionTypes[token[0]]
-            # iterate through each instruction argument and check that it is correct if it is an assembler specific argument
-            # opcode will always be correct (matched in regex) so does not need to be checked
-            # if argument = 'register' then make sure instruction actually uses a register - not a label or literal etc
-            # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
-            # if argument = 'blank' or 'opcode' then skip
-            absoluteToken = []
-            for index, argument in enumerate(arguments):
-                if argument == "blank":
-                    absoluteToken.append(0)
-                elif argument == "opcode":
-                    if type(token[1]) is tuple:
-                        absoluteToken.append(token[1][index])
-                    else:
-                        absoluteToken.append(token[1])
-                    # TODO - this if statement will be removed in future revisions as unfortunately I ran out of time to complete the project so comprimised with this.
-                    # I planned to do a re-write for the pseudoinstructions so you could have proper branching statements 
-                    # however, I ran out of time so the program currently only works for isaV4_definitions and wont work with other instruction sets until i fix this.
-                    # I have hardcoded isa_v4 mnemonics so I could still get branch to label functionality
-                    # in the future this would be replaced by pseudoinstructions so that any instruction set could have branch to label, not just isa_v4
-                    # check out isaV4_definitions_future.json to see the potential pseudoinstruction re-write
-                    # this would also allow you to add in operands instead of just being fixed as well.
-                    branchMnemonics = ("brh", "bie", "bge", "bil")
-                    if token[1][index] in branchMnemonics:
-                        for index, argumentb in enumerate(token[1]):
-                            if index == 0:
-                                continue
-                            elif index == 1:
-                                if token[1][index] in self.SYMBOLTYPES.keys():
-                                    if self.SYMBOLTYPES[token[1][index]] == "registerReference":
-                                        absoluteToken.append(int(f"0x{self.SYMBOLVALUES[argumentb[1:]]}", 16))
+            
+            if token[0] not in self.assemblerSpecificTokens:
+                # get the arguments for the specific instruction
+                arguments = instructionTypes[token[0]]
+                # iterate through each instruction argument and check that it is correct if it is an assembler specific argument
+                # opcode will always be correct (matched in regex) so does not need to be checked
+                # if argument = 'register' then make sure instruction actually uses a register - not a label or literal etc
+                # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
+                # if argument = 'blank' or 'opcode' then skip
+                absoluteToken = []
+                for index, argument in enumerate(arguments):
+                    if argument == "blank":
+                        absoluteToken.append(0)
+                    elif argument == "opcode":
+                        if type(token[1]) is tuple:
+                            absoluteToken.append(token[1][index])
+                        else:
+                            absoluteToken.append(token[1])
+                        # TODO - this if statement will be removed in future revisions as unfortunately I ran out of time to complete the project so comprimised with this.
+                        # I planned to do a re-write for the pseudoinstructions so you could have proper branching statements 
+                        # however, I ran out of time so the program currently only works for isaV4_definitions and wont work with other instruction sets until i fix this.
+                        # I have hardcoded isa_v4 mnemonics so I could still get branch to label functionality
+                        # in the future this would be replaced by pseudoinstructions so that any instruction set could have branch to label, not just isa_v4
+                        # check out isaV4_definitions_future.json to see the potential pseudoinstruction re-write
+                        # this would also allow you to add in operands instead of just being fixed as well.
+                        branchMnemonics = ("brh", "bie", "bge", "bil")
+                        if token[1][index] in branchMnemonics:
+                            for index, argumentb in enumerate(token[1]):
+                                if index == 0:
+                                    continue
+                                elif index == 1:
+                                    if token[1][index] in self.SYMBOLTYPES.keys():
+                                        if self.SYMBOLTYPES[token[1][index]] == "registerReference":
+                                            absoluteToken.append(int(f"0x{self.SYMBOLVALUES[argumentb[1:]]}", 16))
+                                        else:
+                                            self.ERRORLOG.append(f"(reg) invalid operand used: {token}")
+                                    elif token[1][index] in self.REGISTERNAMES:
+                                        absoluteToken.append(int(f"0x{argumentb[1:]}", 16))
                                     else:
-                                        self.ERRORLOG.append(f"(reg) invalid operand used: {token}")
-                                elif token[1][index] in self.REGISTERNAMES:
-                                    absoluteToken.append(int(f"0x{argumentb[1:]}", 16))
+                                        self.ERRORLOG.append(f"(reg) undefined operand found: {token}")
+                                elif index == 2:
+                                    # check if valid label
+                                    if self.SYMBOLTYPES[token[1][index]] == "label":
+                                        absoluteToken.append(argumentb)
+                                    else:
+                                        self.ERRORLOG.append(f"undefined label found: {token}")
                                 else:
-                                    self.ERRORLOG.append(f"(reg) undefined operand found: {token}")
-                            elif index == 2:
-                                # check if valid label
-                                if self.SYMBOLTYPES[token[1][index]] == "label":
-                                    absoluteToken.append(argumentb)
-                                else:
-                                    self.ERRORLOG.append(f"undefined label found: {token}")
-                            else:
-                                self.ERRORLOG.append(f"undefined operand found: {token}")
-                                
-                        break
+                                    self.ERRORLOG.append(f"undefined operand found: {token}")
+                                    
+                            break
+                        else:
+                            continue
+                    elif (argument == "register") and (token[1][index] in self.SYMBOLTYPES.keys()):
+                        # check if symbol used is actually a register
+                        if self.SYMBOLTYPES[token[1][index]] == "registerReference":
+                            # TODO - check if value is in valid register range
+                            # also need to fix this
+                            absoluteToken.append(int(f"0x{self.SYMBOLVALUES[token[1][index]][1:]}", 16))
+                        else:
+                            self.ERRORLOG.append(f"(reg) invalid operand used: {token}")
+
+                    elif (argument == "immediate") and (token[1][index] in self.SYMBOLTYPES.keys()):
+                        # check if symbol used is actually an immediate
+                        if self.SYMBOLTYPES[token[1][index]] == "literal":
+                            absoluteToken.append(self.SYMBOLVALUES[token[1][index]])
+                        else:
+                            self.ERRORLOG.append(f"(imm) invalid operand used: {token}")
+
+                    elif (argument == "register") and (token[1][index] in self.REGISTERNAMES):
+                        # must be a valid register
+                        # TODO - temporary, will fix in future version
+                        absoluteToken.append(int(f"0x{token[1][index][1:]}", 16))
+
+
+                    elif (argument == "immediate") and (token[1][index].isdigit()):
+                        # check if within range
+                        bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
+                        # TODO - THIS NEEDS TO BE FIXED!
+                        if len("{0:08b}".format(bitNumber-2)) == bitNumber:
+                            absoluteToken.append(token[1][index])
+                        else:
+                            self.ERRORLOG.append(f"value not in range: {token}")
+
                     else:
-                        continue
-                elif (argument == "register") and (token[1][index] in self.SYMBOLTYPES.keys()):
-                    # check if symbol used is actually a register
-                    if self.SYMBOLTYPES[token[1][index]] == "registerReference":
-                        # TODO - check if value is in valid register range
-                        # also need to fix this
-                        absoluteToken.append(int(f"0x{self.SYMBOLVALUES[token[1][index]][1:]}", 16))
-                    else:
-                        self.ERRORLOG.append(f"(reg) invalid operand used: {token}")
-
-                elif (argument == "immediate") and (token[1][index] in self.SYMBOLTYPES.keys()):
-                    # check if symbol used is actually an immediate
-                    if self.SYMBOLTYPES[token[1][index]] == "literal":
-                        absoluteToken.append(self.SYMBOLVALUES[token[1][index]])
-                    else:
-                        self.ERRORLOG.append(f"(imm) invalid operand used: {token}")
-
-                elif (argument == "register") and (token[1][index] in self.REGISTERNAMES):
-                    # must be a valid register
-                    # TODO - temporary, will fix in future version
-                    absoluteToken.append(int(f"0x{token[1][index][1:]}", 16))
-
-
-                elif (argument == "immediate") and (token[1][index].isdigit()):
-                    # check if within range
-                    bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
-                    if len('{0:08b}'.format(bitNumber-2)) == bitNumber:
-                        absoluteToken.append(token[1][index])
-                    else:
-                        self.ERRORLOG.append(f"value not in range: {token}")
-                else:
-                    self.ERRORLOG.append(f"undefined operand found: {token}")
-            print(absoluteToken)
-
-
-                
-
-
+                        self.ERRORLOG.append(f"undefined operand found: {token}")
+                absoluteValuesTokenArray.append(absoluteToken)
+            else:
+                absoluteValuesTokenArray.append(token)
 
 
         return absoluteValuesTokenArray
 
 
 
-    def codeGeneration(self, machineCodeTokenArray):
-        print(machineCodeTokenArray)
+    def codeGeneration(self, absoluteValuesTokenArray):
+        print(absoluteValuesTokenArray)
+
+        currentLine = 0
+        labelLine = {}
+        instructionLength = self.ISADATA["instructionLength"]
+        assemblyTypeLengths = self.ISADATA["assemblyTypeLengths"]
+
+        # first pass - gets the line number for all labels
+        for instruction in absoluteValuesTokenArray:
+            if instruction[0] == "label":
+                labelLine[instruction[1]] = currentLine
+            else:
+                currentinstructionType = self.ISADATA["instructions"][instruction[0]]["instructionType"]
+                length = 0
+                for x in self.ISADATA["instructionTypes"][currentinstructionType]:
+                    length += assemblyTypeLengths[x]
+                currentLine += -(-length // instructionLength)
+        
+        # labels can now be removed
+        absoluteValuesTokenArray = [x for x in absoluteValuesTokenArray if x[0] != "label"]
+
+        # second pass - replaces all assembly with machine code
+
+        instructions = self.ISADATA["instructions"]
+        machineCodeArray = []
+            for instruction in absoluteValuesTokenArray:
+                instructionMachineCode = ""
+                for argument in instruction:
+                    if argument in self.ISADATA["instructions"]:
+                        instructionMachineCode += self.ISADATA["instructions"][argument[0]]["opcode"]
+                    elif argument in labelLine.keys():
+                        instructionMachineCode += "{0:010b}".format(labelLine[argument])
+                        #bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
+                        
+
+            machineCodeArray += instruction
 
 
-        return ["aaa"]
+
+        return ["a"]
+
+       
 
 
 
