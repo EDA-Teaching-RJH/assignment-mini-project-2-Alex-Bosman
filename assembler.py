@@ -107,7 +107,20 @@ class assembler:
                     self.SYMBOLS.append(registerReference[0][0])
                     self.SYMBOLVALUES[registerReference[0][0]] = registerReference[0][1]
 
+
+
         # tokenise assemblyArray into tokenArray
+        '''
+        this next part of code tokenizes each line of code
+        it first generates a table of regular expressions for every possible statement
+        this will include assembler features like defining labels. this will also include instructions
+        it also contains a kinda complicated way of allowing support for future instruction sets
+        each instruction will have a type - this is a particular format the instruction follows
+        a lot of instructions will follow the same format so can share the same type
+        the type will always need an opcode. This can then optionally be followed with arguments such as register locations, immediate values etc
+        the argument regular expressions must be defined in assemblyTypes. The length of these arguments in bits also must be defined in assemblyTypeLengths
+        the program will iterate through all the possible in
+        '''
 
         # create an array for tokens to be stored
         tokens = []
@@ -117,42 +130,73 @@ class assembler:
         tokens.append(("constant", literalRegex))
         tokens.append(("registerReference", registerReferenceRegex))
 
+
         # add the regex statements for all instructions
+        # fetch the instruction types
+        instructionTypes = self.ISADATA["InstructionTypes"]
+        print(instructionTypes)
+        # now fetch the assembly type regex statements
+        assemblyTypes = self.ISADATA["assemblyTypes"]
+        # loop through all the defined instructions and create a token for them using defined instruction types and features
         for instruction in self.ISADATA["instructions"]:
-            instructionType = self.ISADATA["instructions"][instruction]["instructionType"]
-            match instructionType:
-                # TODO - additional feature could pass these in with the ISA definitions - then user can also redefine these.
-                case "typeA": tokens.append((instructionType, re.compile(f"^({instruction})$")))
-                case "typeB": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+)$")))
-                case "typeC": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (\d+|-\d+|\w+)$")))
-                case "typeD": tokens.append((instructionType, re.compile(f"^({instruction}) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+) (r[0-9a-f]|\w+)$")))
-                case _: print("Error, unknown instruction type encountered - please check isa definitions.")
+            # first fetch the current instruction type from the definitions file
+            currentInstructionType = self.ISADATA["instructions"][instruction]["instructionType"]
+            # now set a defined flag to be false - this will be set to true if the json file also included the corresponding definitions for the regex
+            INSTRUCTIONDEFINEDFLAG = False
+            # now iterate through all instructiontypes to see if there is a match between the listed ones and the current one
+            for instructionType in instructionTypes:
+                # if there is a match, start creating the regular expression
+                # if there is no match then continue checking
+                if currentInstructionType == instructionType:
+                    # create the start of the string - the character ^ matches from the beginning of the given string
+                    instructionString = "^"
+                    # iterate through the instruction type to match all the statements - e.g get regex for a 'register', get regex for an 'immediate' etc
+                    for statement in instructionTypes[instructionType]:
+                        # if the statement was an opcode the regex can be set as the corresponding meumonic
+                        if statement == "opcode":
+                            instructionString += f"({instruction}) "
+                        else:
+                            # if the regex string is blank then do not add anything to the regex string
+                            # of it is not blank then add the corresponding regex to the regex string
+                            if assemblyTypes[statement] != "":
+                                instructionString += f"({assemblyTypes[statement]}) "
+                
+
+                    # spaces are used to seperate operands but the last space must be removed so it does not get matched.
+                    instructionString = instructionString[:-1]
+                    # now add the end of the statement
+                    instructionString += "$"
+                    # finally, add the token to the token array
+                    tokens.append((instructionType, re.compile(instructionString)))
+                    # set the instruction defined flag to true - this will only not be set if the instruction type is not defined.
+                    INSTRUCTIONDEFINEDFLAG = True
+                    break
+                    
+            if not INSTRUCTIONDEFINEDFLAG:
+                self.ERRORLOG.append(f"Error, unknown instruction type encountered - please check isa definitions: {currentInstructionType}")
+
 
         # create an array for tokens to be stored
         tokenArray = []
+        # iterate through the assembly array and tokenize every instruction and assembler feature
         for line in assemblyArray:
+            # set the token match flag to false
             MATCHFLAG = False
+            # iterate through the token array and see if any of the regex matches with the current line
             for token in tokens:
+                # if the regex matches then set the flag to true
                 if re.findall(token[1], line):
                     MATCHFLAG = True
                     break
             if MATCHFLAG:
+                # if the regex matches then tokenize the line with the particular regex statement
                 tokenArray.append((token[0], re.findall(token[1], line)[0]))
             else:
-                print(f"Invalid instruction found: {line}")
+                # if the current line does not match any possible token regex then it must be invalid - add a corresponding error message
                 self.ERRORLOG.append(f"Invalid instruction found: {line}")
         
 
         return tokenArray
-        #print(tokenArray)
-        #print("")
-        #print(self.LITERALVALUES)
-        ##print(self.RESERVEDWORDS, self.SYMBOLS)
-        
-
-
-
-
 
 
 

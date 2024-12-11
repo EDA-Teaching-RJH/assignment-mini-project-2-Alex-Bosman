@@ -36,5 +36,10 @@
         "blank" : "",
         "register" : "r[0-9a-f]|\\w+",
         "immediate" : "\\d+|\\w+"
+    },
+    "assemblyTypeLengths" : {
+        "blank" : 4,
+        "register" : 4,
+        "immediate" : 8
     }
 }
