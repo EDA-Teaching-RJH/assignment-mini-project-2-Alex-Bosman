@@ -34,8 +34,8 @@
     },
     "assemblyTypes" : {
         "blank" : "",
-        "register" : "r[0-9a-f]|\\w+",
-        "immediate" : "\\d+|\\w+"
+        "register" : "r[0-9a-f]|[A-Za-z]|[A-Za-z]\\w+",
+        "immediate" : "\\d+|[A-Za-z]|[A-Za-z]\\w+"
     },
     "assemblyTypeLengths" : {
         "blank" : 4,

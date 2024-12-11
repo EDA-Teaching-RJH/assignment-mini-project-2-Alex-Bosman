@@ -5,7 +5,9 @@ class assembler:
     def __init__(self, ISAData):
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
+        self.SYMBOLTYPES = {}
         self.SYMBOLVALUES = {}
+        self.assemblerSpecificTokens = ("literal", "registerReference", "label")
         self.program = []
         self.ISADATA = ISAData
 
@@ -64,6 +66,7 @@ class assembler:
         # also create a symbols table (any user defined labels or literals)
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
+        self.SYMBOLTYPES = {}
         self.LITERALVALUES = {}
 
         # add all instructions, pseudoinstructions and any additional assembler reserved words to reserved word table
@@ -72,12 +75,12 @@ class assembler:
         self.RESERVEDWORDS += [x.split()[0] for x in list(self.ISADATA["pseudoInstructions"].keys())] # add pseudoinstructions
         self.RESERVEDWORDS += [f"r{i:x}" for i in range(0, 16)] # add registers
 
-        labelRegex = re.compile("^(\w+):$")
-        literalRegex = re.compile("^.constant (\w+) (-\d+|\d+)$")
-        registerReferenceRegex = re.compile("^.register (\w+) (r[0-9a-f])$")
+        labelRegex = re.compile("^([A-Za-z]|[A-Za-z]\w+):$")
+        literalRegex = re.compile("^.define ([A-Za-z]|[A-Za-z]\w+) (-\d+|\d+)$")
+        registerReferenceRegex = re.compile("^.register ([A-Za-z]|[A-Za-z]\w+) (r[0-9a-f])$")
 
         # iterate through and add all labels and literals to the symbols table
-        # this is done so when assembling the code, any constant reference can be replaced with the actual value and any label can be replaced with location
+        # this is done so when assembling the code, any literal reference can be replaced with the actual value and any label can be replaced with location
         for line in assemblyArray:
             label = labelRegex.findall(line)
             literal = literalRegex.findall(line)
@@ -90,6 +93,8 @@ class assembler:
                     self.ERRORLOG.append(f"label is using a reserved keyword: {label[0]}")
                 else:
                     self.SYMBOLS.append(label[0])
+                    self.SYMBOLTYPES[label[0]] = "label"
+
             if literal != []:
                 if literal[0][0] in self.SYMBOLS:
                     self.ERRORLOG.append(f"literal is already defined: {literal[0]}")
@@ -97,7 +102,9 @@ class assembler:
                     self.ERRORLOG.append(f"literal is using a reserved keyword: {literal[0]}")
                 else:
                     self.SYMBOLS.append(literal[0][0])
+                    self.SYMBOLTYPES[literal[0][0]] = "literal"
                     self.SYMBOLVALUES[literal[0][0]] = literal[0][1]
+
             if registerReference != []:
                 if registerReference[0][0] in self.SYMBOLS:
                     self.ERRORLOG.append(f"registerReference is already defined: {literal[0]}")
@@ -105,6 +112,7 @@ class assembler:
                     self.ERRORLOG.append(f"registerReference is using a reserved keyword: {literal[0]}")
                 else:
                     self.SYMBOLS.append(registerReference[0][0])
+                    self.SYMBOLTYPES[registerReference[0][0]] = "registerReference"
                     self.SYMBOLVALUES[registerReference[0][0]] = registerReference[0][1]
 
 
@@ -120,21 +128,27 @@ class assembler:
         the type will always need an opcode. This can then optionally be followed with arguments such as register locations, immediate values etc
         the argument regular expressions must be defined in assemblyTypes. The length of these arguments in bits also must be defined in assemblyTypeLengths
         the program will iterate through all the possible in
+        
+        there are also some special types of argument that will be recognised by the assembler.
+        type 'opcode' does not need to be listed. This will automatically be replaced by the corresponding opcode
+        type 'immediate' will be substituted with a literal value (can either be the literal definition or just the literal)
+        type 'register' will be substituted with a register value (can either be register rename definition or just the register)
+        type 'blank' will mean there is no argument
+        these special types will still follow the bit size requirement of the file
         '''
 
         # create an array for tokens to be stored
         tokens = []
 
-        # add the regex statements for any assember-specific features (e.g labels, constant definition statement etc)
+        # add the regex statements for any assember-specific features (e.g labels, literal definition statement etc)
         tokens.append(("label", labelRegex))
-        tokens.append(("constant", literalRegex))
+        tokens.append(("literal", literalRegex))
         tokens.append(("registerReference", registerReferenceRegex))
 
 
         # add the regex statements for all instructions
         # fetch the instruction types
         instructionTypes = self.ISADATA["InstructionTypes"]
-        print(instructionTypes)
         # now fetch the assembly type regex statements
         assemblyTypes = self.ISADATA["assemblyTypes"]
         # loop through all the defined instructions and create a token for them using defined instruction types and features
@@ -202,25 +216,83 @@ class assembler:
 
     def syntaxAndSemanticAnalysis(self, tokenArray):
         print(tokenArray)
-        print(self.SYMBOLVALUES)
-        # check if reserved word or symbol is being used as an operand
-        # iterate through entire token array and make sure that all constants and labels are declared correctly
-        # this can be done by using the reserved words and symbols tables
-        # labels will be in typeC instruction  (will need to convert label to integer and also add extra branch statements if needed)
-        # literals will only be in typeC (mif)
-        # literals must be 0-255 or -128 to 127
+        #print(self.SYMBOLS)
+        #print(self.SYMBOLTYPES)
+        #print(self.SYMBOLVALUES)
+
+        # fetch the instruction types
+        instructionTypes = self.ISADATA["InstructionTypes"]
+
+        # check all instructions to make sure literals and register renames are being used in the correct place
+        # literals must only be used for 'immediate' type operands, nothing else
+        # register renames must only be used for 'register' type operands, nothing else
+        ###self.assemblerSpecif = ["literal", "registerReference", "label"]
+
+        for token in tokenArray:
+            
+            # skip any assembler specific tokens - these do not need to be checked, only instructions do.
+            if token[0] not in self.assemblerSpecificTokens:
+                print(token)
+                #print(token)
+                # get the arguments for the specific instruction
+                arguments = instructionTypes[token[0]]
+                # iterate through each instruction argument and check that it is correct if it is an assembler specific argument
+                # opcode will always be correct (matched in regex) so does not need to be checked
+                # if argument = 'register' then make sure instruction actually uses a register - not a label or literal etc
+                # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
+                # if argument = 'blank' or 'opcode' then skip
+
+                
+                print(arguments)
+                for index, argument in enumerate(arguments):
+                    if argument == "blank":
+                        continue
+                    elif argument == "opcode":
+                        continue
+                    elif argument == "register":
+                        print("register found?")
+                        print(token[1][index])
+                    elif argument == "immediate":
+                        print("immediate found?")
+                        print(token[1][index])
+
+            #type(test_tup) is tuple
 
 
-        # check if reserved word or symbol is being used as an operand - effects typeC only (but only if register references not used - TODO)
 
 
-        # now remove any assember only tokens apart from labels as about to assemble, e.g. literals
-        tokenArray = [x for x in tokenArray if x[0] != "literal"]
+                #for index, argument in enumerate(arguments):
+                #    if token[1][index] in self.SYMBOLTYPES.keys():
+                #        if argument == "immediate":
+                #            print("holymoly")
+                #            print(self.SYMBOLTYPES[token[1][index]])
+                #            pass
+                #        if argument == "register":
+                #            print("molyholy")
+                #            print(self.SYMBOLTYPES[token[1][index]])
+                #            pass
+                    #else:
+        print(self.SYMBOLTYPES.keys())
+                    #    print(f"ERROR - {token} not defined")
+                    
+
+
+
+
+
+
+        # now remove any assember specific tokens apart from labels as about to assemble, e.g. literal definitions, register rename definitions etc.
+        machineCodeTokenArray = [x for x in tokenArray if (x[0] not in self.assemblerSpecificTokens)]
+        #print(machineCodeTokenArray)
+
 
     
         pass
-    #### TODO - add feature to rename registers - cannot be constants
+    #### TODO - add feature to rename registers - cannot be literals
 
+
+    def codeGeneration(machineCodeTokenArray):
+        pass
 
 
 def main():
