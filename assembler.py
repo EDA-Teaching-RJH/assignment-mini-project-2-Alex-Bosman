@@ -354,17 +354,21 @@ class assembler:
 
         instructions = self.ISADATA["instructions"]
         machineCodeArray = []
-            for instruction in absoluteValuesTokenArray:
-                instructionMachineCode = ""
-                for argument in instruction:
-                    if argument in self.ISADATA["instructions"]:
-                        instructionMachineCode += self.ISADATA["instructions"][argument[0]]["opcode"]
-                    elif argument in labelLine.keys():
-                        instructionMachineCode += "{0:010b}".format(labelLine[argument])
-                        #bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
-                        
+        for instruction in absoluteValuesTokenArray:
+            instructionMachineCode = ""
+            for argument in instruction:
+                print(argument)
+                if argument in self.ISADATA["instructions"]:
+                    instructionMachineCode += self.ISADATA["instructions"][argument]["opcode"]
+                elif argument in labelLine.keys():
+                    instructionMachineCode += "{0:010b}".format(labelLine[argument])
+                    #bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
+                else:
+                    print("unrec")
 
-            machineCodeArray += instruction
+            machineCodeArray.append(instructionMachineCode)
+        print("")
+        print(machineCodeArray)
 
 
 
