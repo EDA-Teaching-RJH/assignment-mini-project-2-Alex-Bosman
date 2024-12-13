@@ -329,7 +329,7 @@ class assembler:
 
 
     def codeGeneration(self, absoluteValuesTokenArray):
-        print(absoluteValuesTokenArray)
+        #print(absoluteValuesTokenArray)
 
         currentLine = 0
         labelLine = {}
@@ -350,11 +350,10 @@ class assembler:
                     # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                     # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
                 else:
-                    length = 72
+                    length = 64
                     ### assembly for bie and other types of indirect branch
                     # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
-                    # mfa r0; move 0 to accumulator so can indirect branch - 8 bits 
-                    # bie r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
+                    # bge r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
                     # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                     # brh re label(lower 8 bits) - 16 bits
 
@@ -376,10 +375,10 @@ class assembler:
         
         # labels can now be removed
         absoluteValuesTokenArray = [x for x in absoluteValuesTokenArray if x[0] != "label"]
-        print(labelLine)
-        print(lineNumberArrayTests)
+        #print(labelLine)
+        #print(lineNumberArrayTests)
 
-        print(absoluteValuesTokenArray)
+
 
         #print(labelLine)
         #print(lineNumberArrayTests)    
@@ -388,12 +387,13 @@ class assembler:
         # also change all operands into machine code because why not lol
         # change opcodes into machine code as well
         assembleCodeArray = []
-        line = "0b"
+        
         for instruction in absoluteValuesTokenArray:
+            line = "0b"
             for index, argument in enumerate(instruction):
-                if argument in self.ISADATA["instructions"].keys():
+                if (argument in self.ISADATA["instructions"].keys()) or argument == "mif":
                     if argument in branchMnemonics:
-                        line == ""
+                        line = ""
                         print(instruction)
                         if argument == "brh":
                             # register value gets ignored, just branch based off of label
@@ -413,8 +413,8 @@ class assembler:
                             upperPointer = lineValue[8:]
                             lowerPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
-                            assembleCodeArray += ["0b11010000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true) to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
                             break
@@ -424,8 +424,8 @@ class assembler:
                             upperPointer = lineValue[8:]
                             lowerPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
-                            assembleCodeArray += ["0b11010000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += [f"0b1110{register}", "0b00000010"] # bge r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true)to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
                             break
@@ -435,12 +435,19 @@ class assembler:
                             upperPointer = lineValue[8:]
                             lowerPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1110{register}", "0b00000010"] # bge r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
-                            assembleCodeArray += ["0b11110000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += [f"0b1111{register}", "0b00000010"] # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true) to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
                             break
 
+
+                    elif argument == "mif":
+                        line = ""
+                        register = format(int(instruction[1]), "04b")
+                        value = format(int(instruction[2]), "08b")
+                        assembleCodeArray += [f"0b0010{register}", f"0b{value}"]
+                        break
                     else:
                         line += self.ISADATA["instructions"][instruction[0]]["opcode"]
                 else:
@@ -451,51 +458,12 @@ class assembler:
 
             if line != "":
                 assembleCodeArray.append(line)
+    
 
+
+        return assembleCodeArray
                     
 
-        
-
-        # second pass - replaces all assembly with machine code
-        # also swap out branch instruction assembly with correct values (will generate extra lines of assembly)
-
-
-        #instructionTypes = self.ISADATA["instructionTypes"]
-        #machineCodeArray = []
-
-        #for token in absoluteValuesTokenArray:
-        #    arguments = instructionTypes[""]
-        #    for index, argument in enumerate(arguments):
-        #        print(argument)
-                
-
-
-
-        '''
-        instructions = self.ISADATA["instructions"]
-        machineCodeArray = []
-        for instruction in absoluteValuesTokenArray:
-            instructionMachineCode = ""
-            for argument in instruction:
-                print(argument)
-                if argument in self.ISADATA["instructions"]:
-                    print("must be opcode")
-                    instructionMachineCode += self.ISADATA["instructions"][argument]["opcode"]
-                elif argument in labelLine.keys():
-                    print("must be an assembler identifier")
-                    instructionMachineCode += "{0:010b}".format(labelLine[argument])
-                    #bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
-                else:
-                    print("unrec")
-
-            machineCodeArray.append(instructionMachineCode)
-        print("")
-        print(machineCodeArray)
-        '''
-
-
-
-        return ["a"]
 
        
 

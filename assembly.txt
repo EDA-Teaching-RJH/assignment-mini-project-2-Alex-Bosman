@@ -21,43 +21,44 @@ start:
     bie r1 is_odd; branch to Is Odd if odd, else continue if even                6
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                   6 # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
-;                   8 # mfa r0; move 0 to accumulator so can indirect branch - 8 bits 
-;                   9 # bie r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
-;                  11  # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
-;                  13  # brh re label(lower 8 bits) - 16 bits
+;                   8 # bge r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
+;                  10  # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                  12  # brh re label(lower 8 bits) - 16 bits
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; since no branch, the number must be even (n/2)
-    mfa r15; move gp15 to accumulator                                           15
-    lrs; logical right shift accumulator                                        16
-    maf r15; move halved result back to gp15                                    17
+    mfa r15; move gp15 to accumulator                                           14
+    lrs; logical right shift accumulator                                        15
+    maf r15; move halved result back to gp15                                    16
 loop_inf:
-    bie r1 loop_inf; branch if equal to 1 (program stop condition)              18
+    bie r1 loop_inf; branch if equal to 1 (program stop condition)              17
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                   18 # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
-;                   20 # mfa r0; move 0 to accumulator so can indirect branch - 8 bits 
-;                   21 # bie r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
-;                   23 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
-;                   25 # brh re label(lower 8 bits) - 16 bits
+;                   17 # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+;                   19 # bge r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
+;                   21 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                   23 # brh re label(lower 8 bits) - 16 bits
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-    brh r0 start; goto Beginning                                                27
+    brh r0 start; goto Beginning                                                25
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                  27 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
-;                  29 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+;                  25 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                  27 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Is Odd (3n+1)
 is_odd:
-    mfa r15; move gp15 to acc                                                   31
-    add r15; doubled                                                            32
-    add r15; tripled                                                            33
-    inc; add 1                                                                  34
-    maf r15; move back to gp15                                                  35
-    brh r0 start; goto Beginning                                                36
+    mfa r15; move gp15 to acc                                                   29
+    add r15; doubled                                                            30
+    add r15; tripled                                                            31
+    inc; add 1                                                                  32
+    maf r15; move back to gp15                                                  33
+    brh r0 start; goto Beginning                                                34
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                 34 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                 36 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 end: ; included so program can handle end labels lol - these will probably just be ignored as nothing is jumping to them
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                 36 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
-;                 38 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
-;                 40 lines long program (including 0 line)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;                 38 lines long program (including 0 line)
