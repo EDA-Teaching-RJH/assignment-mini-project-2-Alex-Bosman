@@ -335,23 +335,69 @@ class assembler:
         labelLine = {}
         instructionLength = self.ISADATA["instructionLength"]
         assemblyTypeLengths = self.ISADATA["assemblyTypeLengths"]
+        branchMnemonics = ("brh", "bie", "bge", "bil")
+
+
+        testarray = [currentLine]
 
         # first pass - gets the line number for all labels
         for instruction in absoluteValuesTokenArray:
-            if instruction[0] == "label":
+
+            if instruction[0] in branchMnemonics:
+                if instruction[0] == "brh":
+                    length = 32
+                    ### assembly for brh label instruction
+                    # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                    # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+                else:
+                    length = 64
+                    ### assembly for bie and other types of indirect branch
+                    # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+                    # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                    # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                    # brh re label(lower 8 bits) - 16 bits
+
+                currentLine += -(-length // instructionLength)
+
+            elif instruction[0] == "label":
                 labelLine[instruction[1]] = currentLine
+                
             else:
                 currentinstructionType = self.ISADATA["instructions"][instruction[0]]["instructionType"]
                 length = 0
                 for x in self.ISADATA["instructionTypes"][currentinstructionType]:
                     length += assemblyTypeLengths[x]
                 currentLine += -(-length // instructionLength)
+
+
+            testarray.append(currentLine)
+
         
         # labels can now be removed
         absoluteValuesTokenArray = [x for x in absoluteValuesTokenArray if x[0] != "label"]
 
-        # second pass - replaces all assembly with machine code
 
+
+
+        print(labelLine)
+        print(testarray)    
+
+        # second pass - replaces all assembly with machine code
+        # also swap out branch instruction assembly with correct values (will generate extra lines of assembly)
+
+
+        #instructionTypes = self.ISADATA["instructionTypes"]
+        #machineCodeArray = []
+
+        #for token in absoluteValuesTokenArray:
+        #    arguments = instructionTypes[""]
+        #    for index, argument in enumerate(arguments):
+        #        print(argument)
+                
+
+
+
+        '''
         instructions = self.ISADATA["instructions"]
         machineCodeArray = []
         for instruction in absoluteValuesTokenArray:
@@ -359,8 +405,10 @@ class assembler:
             for argument in instruction:
                 print(argument)
                 if argument in self.ISADATA["instructions"]:
+                    print("must be opcode")
                     instructionMachineCode += self.ISADATA["instructions"][argument]["opcode"]
                 elif argument in labelLine.keys():
+                    print("must be an assembler identifier")
                     instructionMachineCode += "{0:010b}".format(labelLine[argument])
                     #bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
                 else:
@@ -369,6 +417,7 @@ class assembler:
             machineCodeArray.append(instructionMachineCode)
         print("")
         print(machineCodeArray)
+        '''
 
 
 

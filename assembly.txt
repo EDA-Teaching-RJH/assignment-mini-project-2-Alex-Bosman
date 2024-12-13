@@ -17,20 +17,45 @@ start:
 ; Beginning
     mfa r1; move AND mask (00000001) into accumulator                            4
     and r15; accumulator = accumulator AND gp15 (masks all bits except 0 bit)    5
+;
     bie r1 is_odd; branch to Is Odd if odd, else continue if even                6
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                   6 # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+;                   8 # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+;                  10 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                  12  # brh re label(lower 8 bits) - 16 bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; since no branch, the number must be even (n/2)
-    mfa r15; move gp15 to accumulator                                            8
-    lrs; logical right shift accumulator                                         9
-    maf r15; move halved result back to gp15                                    10
+    mfa r15; move gp15 to accumulator                                           14
+    lrs; logical right shift accumulator                                        15
+    maf r15; move halved result back to gp15                                    16
 loop_inf:
-    bie r1 loop_inf; branch if equal to 1 (program stop condition)              11
-    brh r0 start; goto Beginning                                                13
+    bie r1 loop_inf; branch if equal to 1 (program stop condition)              17
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                  17 # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+;                  19 # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+;                  21 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                  23 # brh re label(lower 8 bits) - 16 bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+    brh r0 start; goto Beginning                                                25
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                  25 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                  27 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Is Odd (3n+1)
 is_odd:
-    mfa r15; move gp15 to acc                                                   15
-    add r15; doubled                                                            16
-    add r15; tripled                                                            17
-    inc; add 1                                                                  18
-    maf r15; move back to gp15                                                  19
-    brh r0 start; goto Beginning                                                20
+    mfa r15; move gp15 to acc                                                   29
+    add r15; doubled                                                            30
+    add r15; tripled                                                            31
+    inc; add 1                                                                  32
+    maf r15; move back to gp15                                                  33
+    brh r0 start; goto Beginning                                                34
+labelEND:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                 34 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+;                 36 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+;                 38 lines long program (including 0 line)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
