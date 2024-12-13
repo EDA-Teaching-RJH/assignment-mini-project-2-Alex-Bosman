@@ -3,6 +3,7 @@ import json
 
 class assembler:
     def __init__(self, ISAData):
+        # define some arrays and dictionaries
         self.RESERVEDWORDS = []
         self.SYMBOLS = []
         self.REGISTERNAMES = []
@@ -11,24 +12,27 @@ class assembler:
         self.assemblerSpecificTokens = ("literal", "registerReference", "label")
         self.program = []
         self.ISADATA = ISAData
-
-        #temp
         self.ERRORLOG = []
-
-
 
 
     def assemble(self, program):
         self.program = program
 
+        # preprocess, lexical analysis, syntax and sematic analysis and then generate machine code
         assemblyArray = self.preProcessing()
         tokenArray = self.lexicalAnalysis(assemblyArray)
         absoluteValuesTokenArray = self.syntaxAndSemanticAnalysis(tokenArray)
         machineCode = self.codeGeneration(absoluteValuesTokenArray)
-        print(machineCode)
 
-        print(f"Errors: {self.ERRORLOG}")
-        return machineCode
+        # if there are any errors then append to error log and return None
+        # else return the successfully assembled machine code
+        if len(self.ERRORLOG) != 0:
+            print("Assembled with Errors!")
+            print(f"Errors: {self.ERRORLOG}")
+            return None
+        else:
+            print("Assembled Successfully!")
+            return machineCode
 
 
 
@@ -244,6 +248,7 @@ class assembler:
                 # if argument = 'register' then make sure instruction actually uses a register - not a label or literal etc
                 # if argument = 'immediate' then make sure instruction actually uses an immediate - not a label or register etc.
                 # if argument = 'blank' or 'opcode' then skip
+                # if undefined argument/instruction found append it to the error log
                 absoluteToken = []
                 for index, argument in enumerate(arguments):
                     if argument == "blank":
@@ -258,8 +263,7 @@ class assembler:
                         # however, I ran out of time so the program currently only works for isaV4_definitions and wont work with other instruction sets until i fix this.
                         # I have hardcoded isa_v4 mnemonics so I could still get branch to label functionality
                         # in the future this would be replaced by pseudoinstructions so that any instruction set could have branch to label, not just isa_v4
-                        # check out isaV4_definitions_future.json to see the potential pseudoinstruction re-write
-                        # this would also allow you to add in operands instead of just being fixed as well.
+                        # this would also allow you to add in operands to pseudoinstructions instead of references being fixed.
                         branchMnemonics = ("brh", "bie", "bge", "bil")
                         if token[1][index] in branchMnemonics:
                             for index, argumentb in enumerate(token[1]):
@@ -330,20 +334,19 @@ class assembler:
 
 
     def codeGeneration(self, absoluteValuesTokenArray):
-        #print(absoluteValuesTokenArray)
-
+        # this is where things get really messy haha
+        # set up some variable for line counting and label line storing and fetch some data from the json file
+        # theoretically currentLine can be set to an offset value if you had some sort of boot code or different code at line 0 in the cpu.
         currentLine = 0
         labelLine = {}
         instructionLength = self.ISADATA["instructionLength"]
         assemblyTypeLengths = self.ISADATA["assemblyTypeLengths"]
         branchMnemonics = ("brh", "bie", "bge", "bil")
 
-
-        lineNumberArrayTests = [currentLine]
-
         # first pass - gets the line number for all labels
+        # this will iterate through the token array and calculate the line number of where the label is actually pointing to.
         for instruction in absoluteValuesTokenArray:
-
+            # TODO - another hack fix to solve the branching issues - the program will just precaculate the actual bit lengths for these instructions for now
             if instruction[0] in branchMnemonics:
                 if instruction[0] == "brh":
                     length = 32
@@ -358,59 +361,72 @@ class assembler:
                     # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                     # brh re label(lower 8 bits) - 16 bits
 
+                # set the current line to calculated length of instruction (in bits) div by the word length (for isaV4 its 8 bits)
                 currentLine += -(-length // instructionLength)
 
+            # if the instruction is a label reference, then add it to the labelLine dictionary and set the value to be the currentLine as this is the line the label is at
             elif instruction[0] == "label":
                 labelLine[instruction[1]] = currentLine
-                
+            
+            # if the instruction is just a regular instruction, calculate its length based on type - can fetch each opcode and operand bit length from json and add 
+            # them all together to get the full length of the instruction.
             else:
                 currentinstructionType = self.ISADATA["instructions"][instruction[0]]["instructionType"]
                 length = 0
                 for x in self.ISADATA["instructionTypes"][currentinstructionType]:
                     length += assemblyTypeLengths[x]
+                # set the current line to calculated length of instruction (in bits) div by the word length (for isaV4 its 8 bits)
                 currentLine += -(-length // instructionLength)
 
-            # TODO remove this array - testing for seeing how many line numbers there are
-            lineNumberArrayTests.append(currentLine)
 
-        
         # labels can now be removed
         absoluteValuesTokenArray = [x for x in absoluteValuesTokenArray if x[0] != "label"]
-        #print(labelLine)
-        #print(lineNumberArrayTests)
 
-
-
-        #print(labelLine)
-        #print(lineNumberArrayTests)    
-
-        # second pass - replace all label references with actual values (will generate extra lines of assembly due to branches technically being pseudoinstructions)
-        # also change all operands into machine code because why not lol
-        # change opcodes into machine code as well
+        # second pass - generate machine code
+        # replace all label references with actual values
+        # TODO - another hack fix lol - labels will generate extra lines of assembly due to branches technically being pseudoinstructions but not implemented properly
+        # change all operands into machine code
+        # change opcodes into machine code
+        # combine in one array
         assembleCodeArray = []
         
+        # iterate through every instruction and turn into machine code
         for instruction in absoluteValuesTokenArray:
+            # generate the start of a line - use 0b to indicate it is binary
             line = "0b"
-            for index, argument in enumerate(instruction):
-                if (argument in self.ISADATA["instructions"].keys()) or argument == "mif":
+            # iterate through every opcode and operands in each instruction and turn into machine code
+            for argument in instruction:
+                # TODO - mif also hack fixed as I didnt have time to implement properly lol
+                # if the argument is a branch opcode or mif/mrf/mrf then ignore this loop and instead directly generate the assembly code using hardcoded instructions
+                # these instructions allow jumping to a label anywhere in the program - this means you can jump up to 65536 lines if needed technically
+                if (argument in self.ISADATA["instructions"].keys()) or (argument == "mif") or (argument== "mfr") or (argument=="mrf"):
                     if argument in branchMnemonics:
                         line = ""
-                        print(instruction)
                         if argument == "brh":
                             # register value gets ignored, just branch based off of label
-                            # this is because I ran out of time so could not implement proper branching + branching with labels
+                            # TODO - this is because I ran out of time so could not implement proper branching + branching with labels
                             # so unfortunately still need to reference a register value in assembly, even though its useless
-                            # this is really stupid but I need to commit to it due to time contraints lol
-                            # the whole way the branching is handled is stupid - could have been an easy fix if I just took the time to revamp custom pseudoinstructions
+                            # this is really stupid but I needed to do it this way due to time contraints lol
+                            # the whole way the branching is handled is stupid - could have been an easy fix if I had the time to revamp custom pseudoinstructions
+
+                            # an unconditonal branch follows the pattern of "opcode", "random register (not even used lol)", "label"
+                            # I wrote a small program in machine code that will first load the upper 8 bits of the label into register 14
+                            # then it will branch to the label using register 14 as upper pointer and the lower 8 bits of the label as the lower 8 bits.
                             lineValue = format(labelLine[instruction[2]], "016b")
                             lowerPointer = lineValue[8:]
                             upperPointer = lineValue[:8]
-                            print("fffffupper ", lineValue, upperPointer, lowerPointer)
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
                             break
 
                         elif argument == "bil":
+                            # conditional branches follow the pattern of "opcode", "register to compare to accumulator", "label"
+                            # the actual branch instruction only allows for an indirect jump of -128 to +127 maximum
+                            # to fully support whole range of label jumping I also had to write some machine code to fix this issue lol
+                            # first it will do the comparison with the accumulator. If there is a successful branch it will indirect branch 3 lines to a direct branch instruction
+                            # this direct branch instruction will branch to the label address
+                            # if the branch is unsuccessful then it will take an indirect branch of 5 lines to skip over the direct branch to label instructions
+                            # this can then continue on with whatever code comes after
                             lineValue = format(labelLine[instruction[2]], "016b")
                             lowerPointer = lineValue[8:]
                             upperPointer = lineValue[:8]
@@ -422,6 +438,13 @@ class assembler:
                             break
 
                         elif argument == "bge":
+                            # conditional branches follow the pattern of "opcode", "register to compare to accumulator", "label"
+                            # the actual branch instruction only allows for an indirect jump of -128 to +127 maximum
+                            # to fully support whole range of label jumping I also had to write some machine code to fix this issue lol
+                            # first it will do the comparison with the accumulator. If there is a successful branch it will indirect branch 3 lines to a direct branch instruction
+                            # this direct branch instruction will branch to the label address
+                            # if the branch is unsuccessful then it will take an indirect branch of 5 lines to skip over the direct branch to label instructions
+                            # this can then continue on with whatever code comes after
                             lineValue = format(labelLine[instruction[2]], "016b")
                             lowerPointer = lineValue[8:]
                             upperPointer = lineValue[:8]
@@ -433,6 +456,13 @@ class assembler:
                             break
 
                         elif argument == "bie":
+                            # conditional branches follow the pattern of "opcode", "register to compare to accumulator", "label"
+                            # the actual branch instruction only allows for an indirect jump of -128 to +127 maximum
+                            # to fully support whole range of label jumping I also had to write some machine code to fix this issue lol
+                            # first it will do the comparison with the accumulator. If there is a successful branch it will indirect branch 3 lines to a direct branch instruction
+                            # this direct branch instruction will branch to the label address
+                            # if the branch is unsuccessful then it will take an indirect branch of 5 lines to skip over the direct branch to label instructions
+                            # this can then continue on with whatever code comes after
                             lineValue = format(labelLine[instruction[2]], "016b")
                             lowerPointer = lineValue[8:]
                             upperPointer = lineValue[:8]
@@ -445,23 +475,46 @@ class assembler:
 
 
                     elif argument == "mif":
+                        # TODO - another hack fix for mif - needed as instruction is 16 bits
+                        # this just manually creates the assembly code again
                         line = ""
                         register = format(int(instruction[1]), "04b")
                         value = format(int(instruction[2]), "08b")
                         assembleCodeArray += [f"0b0010{register}", f"0b{value}"]
                         break
+                    elif argument == "mfr":
+                        # TODO - another hack fix for mfr - needed as instruction is 16 bits
+                        # this just manually creates the assembly code again
+                        line = ""
+                        register = format(int(instruction[1]), "04b")
+                        upperPointer = format(int(instruction[2]), "04b")
+                        lowerPointer = format(int(instruction[3]), "04b")
+                        assembleCodeArray += [f"0b0011{register}", f"0b{upperPointer}{lowerPointer}"]
+                        break
+                    elif argument == "mrf":
+                        # TODO - another hack fix for mrf - needed as instruction is 16 bits
+                        # this just manually creates the assembly code again
+                        line = ""
+                        register = format(int(instruction[1]), "04b")
+                        upperPointer = format(int(instruction[2]), "04b")
+                        lowerPointer = format(int(instruction[3]), "04b")
+                        assembleCodeArray += [f"0b0100{register}", f"0b{upperPointer}{lowerPointer}"]
+                        break       
                     else:
+                        # if just other opcode then add it to the line
                         line += self.ISADATA["instructions"][instruction[0]]["opcode"]
-                else:
-                    # convert number to machine code
-                    # TODO - need to check size
-                    line += format(int(argument), "04b")
-                    print(argument, format(int(argument), "04b"))
 
+                else:
+                    # TODO - hack fix, adds 4 bits argument onto the line
+                    # hackfix as if I used other isas with different lengths then they would not be 4 bits
+                    line += format(int(argument), "04b")
+
+            # if the line was set to blank it was because one of the hack fixes overrided the program
+            # do not add the line to assemblyarray as hack fix has already generated the line
             if line != "":
                 assembleCodeArray.append(line)
     
-
+        # finally, go through the array and add line breaks
         machineCodeArray = [f"{x}\n" for x in assembleCodeArray]
         return machineCodeArray
                     
