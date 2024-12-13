@@ -403,18 +403,19 @@ class assembler:
                             # this is really stupid but I need to commit to it due to time contraints lol
                             # the whole way the branching is handled is stupid - could have been an easy fix if I just took the time to revamp custom pseudoinstructions
                             lineValue = format(labelLine[instruction[2]], "016b")
-                            upperPointer = lineValue[8:]
-                            lowerPointer = lineValue[:8]
+                            lowerPointer = lineValue[8:]
+                            upperPointer = lineValue[:8]
+                            print("fffffupper ", lineValue, upperPointer, lowerPointer)
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
                             break
 
                         elif argument == "bil":
                             lineValue = format(labelLine[instruction[2]], "016b")
-                            upperPointer = lineValue[8:]
-                            lowerPointer = lineValue[:8]
+                            lowerPointer = lineValue[8:]
+                            upperPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += [f"0b1101{register}", "0b00000011"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
                             assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true) to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
@@ -422,10 +423,10 @@ class assembler:
 
                         elif argument == "bge":
                             lineValue = format(labelLine[instruction[2]], "016b")
-                            upperPointer = lineValue[8:]
-                            lowerPointer = lineValue[:8]
+                            lowerPointer = lineValue[8:]
+                            upperPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1110{register}", "0b00000010"] # bge r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += [f"0b1110{register}", "0b00000011"] # bge r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
                             assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true)to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
@@ -433,10 +434,10 @@ class assembler:
 
                         elif argument == "bie":
                             lineValue = format(labelLine[instruction[2]], "016b")
-                            upperPointer = lineValue[8:]
-                            lowerPointer = lineValue[:8]
+                            lowerPointer = lineValue[8:]
+                            upperPointer = lineValue[:8]
                             register = format(int(instruction[1]), "04b")
-                            assembleCodeArray += [f"0b1111{register}", "0b00000010"] # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                            assembleCodeArray += [f"0b1111{register}", "0b00000011"] # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
                             assembleCodeArray += ["0b11100000", "0b00000101"] # bge r0 +5; branch was false so indirect branch (if acc >= 0 which is true) to offset where code continues - 16 bits
                             assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                             assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits

@@ -8,13 +8,14 @@
 
 .define testlabel 23
 .register register132 r1
-.register r15 rf
+.register r15 ra
 
 ; Inital Setup
 start:
     mif r15 34; move 34 into gp15 - collatz number to test                       0
     mif register132 1; move 1 into gp1 - for AND mask (even or odd checking)     2
 ; Beginning
+beginning:
     mfa r1; move AND mask (00000001) into accumulator                            4
     and r15; accumulator = accumulator AND gp15 (masks all bits except 0 bit)    5
 ;
@@ -40,7 +41,7 @@ loop_inf:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-    brh r0 start; goto Beginning                                                25
+    brh r0 beginning; goto Beginning                                                25
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                  25 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
 ;                  27 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
@@ -52,7 +53,7 @@ is_odd:
     add r15; tripled                                                            31
     inc; add 1                                                                  32
     maf r15; move back to gp15                                                  33
-    brh r0 start; goto Beginning                                                34
+    brh r0 beginning; goto beginning                                            34
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                 34 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
 ;                 36 # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
