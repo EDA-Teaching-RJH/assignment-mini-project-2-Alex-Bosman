@@ -312,7 +312,7 @@ class assembler:
                         # check if within range
                         bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
                         # TODO - THIS NEEDS TO BE FIXED!
-                        if len("{0:08b}".format(bitNumber-2)) == bitNumber:
+                        if int(token[1][index]) <= (bitNumber ** 2) - 1:
                             absoluteToken.append(token[1][index])
                         else:
                             self.ERRORLOG.append(f"value not in range: {token}")
@@ -338,7 +338,7 @@ class assembler:
         branchMnemonics = ("brh", "bie", "bge", "bil")
 
 
-        testarray = [currentLine]
+        lineNumberArrayTests = [currentLine]
 
         # first pass - gets the line number for all labels
         for instruction in absoluteValuesTokenArray:
@@ -350,10 +350,11 @@ class assembler:
                     # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                     # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
                 else:
-                    length = 64
+                    length = 72
                     ### assembly for bie and other types of indirect branch
-                    # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
-                    # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                    # bie r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16 bits
+                    # mfa r0; move 0 to accumulator so can indirect branch - 8 bits 
+                    # bie r0 +5; branch was false so indirect branch (if r0 == 0 which evaluates to True) to offset where code continues - 16 bits
                     # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
                     # brh re label(lower 8 bits) - 16 bits
 
@@ -369,18 +370,91 @@ class assembler:
                     length += assemblyTypeLengths[x]
                 currentLine += -(-length // instructionLength)
 
-
-            testarray.append(currentLine)
+            # TODO remove this array - testing for seeing how many line numbers there are
+            lineNumberArrayTests.append(currentLine)
 
         
         # labels can now be removed
         absoluteValuesTokenArray = [x for x in absoluteValuesTokenArray if x[0] != "label"]
-
-
-
-
         print(labelLine)
-        print(testarray)    
+        print(lineNumberArrayTests)
+
+        print(absoluteValuesTokenArray)
+
+        #print(labelLine)
+        #print(lineNumberArrayTests)    
+
+        # second pass - replace all label references with actual values (will generate extra lines of assembly due to branches technically being pseudoinstructions)
+        # also change all operands into machine code because why not lol
+        # change opcodes into machine code as well
+        assembleCodeArray = []
+        line = "0b"
+        for instruction in absoluteValuesTokenArray:
+            for index, argument in enumerate(instruction):
+                if argument in self.ISADATA["instructions"].keys():
+                    if argument in branchMnemonics:
+                        line == ""
+                        print(instruction)
+                        if argument == "brh":
+                            # register value gets ignored, just branch based off of label
+                            # this is because I ran out of time so could not implement proper branching + branching with labels
+                            # so unfortunately still need to reference a register value in assembly, even though its useless
+                            # this is really stupid but I need to commit to it due to time contraints lol
+                            # the whole way the branching is handled is stupid - could have been an easy fix if I just took the time to revamp custom pseudoinstructions
+                            lineValue = format(labelLine[instruction[2]], "016b")
+                            upperPointer = lineValue[8:]
+                            lowerPointer = lineValue[:8]
+                            assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                            assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits); branch (with lower 8 bits as immediate) - 16 bits
+                            break
+
+                        elif argument == "bil":
+                            lineValue = format(labelLine[instruction[2]], "016b")
+                            upperPointer = lineValue[8:]
+                            lowerPointer = lineValue[:8]
+                            register = format(int(instruction[1]), "04b")
+                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+                            assembleCodeArray += ["0b11010000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                            assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
+                            break
+
+                        elif argument == "bge":
+                            lineValue = format(labelLine[instruction[2]], "016b")
+                            upperPointer = lineValue[8:]
+                            lowerPointer = lineValue[:8]
+                            register = format(int(instruction[1]), "04b")
+                            assembleCodeArray += [f"0b1101{register}", "0b00000010"] # bil r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+                            assembleCodeArray += ["0b11010000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                            assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
+                            break
+
+                        elif argument == "bie":
+                            lineValue = format(labelLine[instruction[2]], "016b")
+                            upperPointer = lineValue[8:]
+                            lowerPointer = lineValue[:8]
+                            register = format(int(instruction[1]), "04b")
+                            assembleCodeArray += [f"0b1110{register}", "0b00000010"] # bge r(register specified) +3;if true then go to main branching statement, if false go to next line (which will also skip past the main branching statement) - 16
+                            assembleCodeArray += ["0b11110000" "0b00000101"] # bie r0 +5; branch was false so indirect branch (if r0 = r0) to offset where code continues - 16
+                            assembleCodeArray += ["0b00101110", f"0b{upperPointer}"] # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits
+                            assembleCodeArray += ["0b11001110", f"0b{lowerPointer}"] # brh re label(lower 8 bits) - 16 bits
+                            break
+
+                    else:
+                        line += self.ISADATA["instructions"][instruction[0]]["opcode"]
+                else:
+                    # convert number to machine code
+                    # TODO - need to check size
+                    line += format(int(argument), "04b")
+                    print(argument, format(int(argument), "04b"))
+
+            if line != "":
+                assembleCodeArray.append(line)
+
+                    
+
+        
 
         # second pass - replaces all assembly with machine code
         # also swap out branch instruction assembly with correct values (will generate extra lines of assembly)
