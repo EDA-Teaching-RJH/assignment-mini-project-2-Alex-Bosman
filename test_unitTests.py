@@ -225,15 +225,55 @@ def test_assembler_label():
 
 
 def test_assembler_constant():
-    pass
+    with open("isaV4_definitions.json", "r") as file:
+        instructionInfo = json.load(file)
+    a = assembler(instructionInfo)
+
+    program = [".define constant1 39", "mif r3 constant1"]
+    validMachineCode = ["0b00100011\n", "0b00100111\n"]
+    generatedMachineCode = a.assemble(program)
+    assert validMachineCode == generatedMachineCode 
 
 
 def test_assembler_registerRename():
-    pass
+    with open("isaV4_definitions.json", "r") as file:
+        instructionInfo = json.load(file)
+    a = assembler(instructionInfo)
+
+    program = [".register registerBallX r5", "mif registerBallX 39"]
+    validMachineCode = ["0b00100101\n", "0b00100111\n"]
+    generatedMachineCode = a.assemble(program)
+    assert validMachineCode == generatedMachineCode 
+
 
 def test_assembler_comments():
-    pass
+    with open("isaV4_definitions.json", "r") as file:
+        instructionInfo = json.load(file)
+    a = assembler(instructionInfo)
+
+    program = ["startLabel:;comment on label", "lrs; logical right shift", ";blank line comment", "lrs", "branchLabel:", "bie r3 startLabel     ; branch if equal to acc", "brh r0 branchLabel"]
+    validMachineCode = ["0b10110000\n", "0b10110000\n", "0b11110011\n", "0b00000011\n", "0b11100000\n", "0b00000101\n", "0b00101110\n", "0b00000000\n", "0b11001110\n", "0b00000000\n", "0b00101110\n", "0b00000000\n", "0b11001110\n", "0b00000010\n"]
+    generatedMachineCode = a.assemble(program)
+    assert validMachineCode == generatedMachineCode
 
 
 def test_assembler_invalidData():
-    pass
+    with open("isaV4_definitions.json", "r") as file:
+        instructionInfo = json.load(file)
+    a = assembler(instructionInfo)
+    program = ["asudohsduof"]
+    validMachineCode = None
+    generatedMachineCode = a.assemble(program)
+    assert validMachineCode == generatedMachineCode
+    assert a.ERRORLOG == ["Invalid instruction found: asudohsduof"]
+
+
+def test_assembler_moreInvalidData():
+    with open("isaV4_definitions.json", "r") as file:
+        instructionInfo = json.load(file)
+    a = assembler(instructionInfo)
+    program = ["asudohsduof", "mfr asd fsdgf", "        asduo"]
+    validMachineCode = None
+    generatedMachineCode = a.assemble(program)
+    assert validMachineCode == generatedMachineCode
+    assert a.ERRORLOG == ["Invalid instruction found: asudohsduof", "Invalid instruction found: mfr asd fsdgf", "Invalid instruction found: asduo"]
