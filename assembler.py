@@ -28,6 +28,7 @@ class assembler:
         print(machineCode)
 
         print(f"Errors: {self.ERRORLOG}")
+        return machineCode
 
 
 
@@ -460,8 +461,8 @@ class assembler:
                 assembleCodeArray.append(line)
     
 
-
-        return assembleCodeArray
+        machineCodeArray = [f"{x}\n" for x in assembleCodeArray]
+        return machineCodeArray
                     
 
 
@@ -477,7 +478,9 @@ def main():
     with open("isaV4_definitions.json", "r") as file:
         instructionInfo = json.load(file)
     a = assembler(instructionInfo)
-    a.assemble(program)
+    machineCode = a.assemble(program)
+    with open("machineCode.txt", "w") as file:
+        file.writelines(machineCode)
 
 
 
