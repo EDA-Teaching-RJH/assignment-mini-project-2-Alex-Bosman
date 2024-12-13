@@ -8,16 +8,15 @@
 
 .define testlabel 23
 .register register132 r1
-.register r15 ra
 
 ; Inital Setup
 start:
-    mif r15 34; move 34 into gp15 - collatz number to test                       0
+    mif ra 34; move 34 into gp15 - collatz number to test                       0
     mif register132 1; move 1 into gp1 - for AND mask (even or odd checking)     2
 ; Beginning
 beginning:
     mfa r1; move AND mask (00000001) into accumulator                            4
-    and r15; accumulator = accumulator AND gp15 (masks all bits except 0 bit)    5
+    and ra; accumulator = accumulator AND gp15 (masks all bits except 0 bit)    5
 ;
     bie r1 is_odd; branch to Is Odd if odd, else continue if even                6
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,9 +27,9 @@ beginning:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; since no branch, the number must be even (n/2)
-    mfa r15; move gp15 to accumulator                                           14
+    mfa ra; move gp15 to accumulator                                           14
     lrs; logical right shift accumulator                                        15
-    maf r15; move halved result back to gp15                                    16
+    maf ra; move halved result back to gp15                                    16
 loop_inf:
     bie r1 loop_inf; branch if equal to 1 (program stop condition)              17
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,11 +47,11 @@ loop_inf:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Is Odd (3n+1)
 is_odd:
-    mfa r15; move gp15 to acc                                                   29
-    add r15; doubled                                                            30
-    add r15; tripled                                                            31
+    mfa ra; move gp15 to acc                                                   29
+    add ra; doubled                                                            30
+    add ra; tripled                                                            31
     inc; add 1                                                                  32
-    maf r15; move back to gp15                                                  33
+    maf ra; move back to gp15                                                  33
     brh r0 beginning; goto beginning                                            34
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                 34 # mif re label(upper 8 bits); load the upper pointer of the label - 16 bits

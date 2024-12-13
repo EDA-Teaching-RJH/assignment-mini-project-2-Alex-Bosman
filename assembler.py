@@ -84,9 +84,9 @@ class assembler:
         self.RESERVEDWORDS += [f"r{i:x}" for i in range(0, 16)] # add registers
         self.REGISTERNAMES = [f"r{i:x}" for i in range(0, 16)] # add registers to registername array (for syntax and semantic checking)
 
-        labelRegex = re.compile("^([A-Za-z]|[A-Za-z]\w+):$")
-        literalRegex = re.compile("^.define ([A-Za-z]|[A-Za-z]\w+) (-\d+|\d+)$")
-        registerReferenceRegex = re.compile("^.register ([A-Za-z]|[A-Za-z]\w+) (r[0-9a-f])$")
+        labelRegex = re.compile("^([A-Za-z]|[A-Za-z]\\w+):$")
+        literalRegex = re.compile("^.define ([A-Za-z]|[A-Za-z]\\w+) (-\\d+|\\d+)$")
+        registerReferenceRegex = re.compile("^.register ([A-Za-z]|[A-Za-z]\\w+) (r[0-9a-f])$")
 
         # iterate through and add all labels and literals to the symbols table
         # this is done so when assembling the code, any literal reference can be replaced with the actual value and any label can be replaced with location
@@ -317,7 +317,7 @@ class assembler:
                         # check if within range
                         bitNumber = self.ISADATA["assemblyTypeLengths"]["immediate"]
                         # TODO - THIS NEEDS TO BE FIXED!
-                        if int(token[1][index]) <= (bitNumber ** 2) - 1:
+                        if int(token[1][index]) <= (2 ** bitNumber) - 1:
                             absoluteToken.append(token[1][index])
                         else:
                             self.ERRORLOG.append(f"value not in range: {token}")
@@ -518,12 +518,6 @@ class assembler:
         machineCodeArray = [f"{x}\n" for x in assembleCodeArray]
         return machineCodeArray
                     
-
-
-       
-
-
-
 
 
 def main():
